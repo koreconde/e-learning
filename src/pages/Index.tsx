@@ -36,10 +36,8 @@ const Index = () => {
   };
 
   useEffect(() => {
-    document.body.style.overflow = stage === "test" ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    // Test runner manages its own scroll container
+    return;
   }, [stage]);
 
   if (stage === "test") return <TestRunner onFinish={handleTestFinish} />;
