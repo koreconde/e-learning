@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import logoFull from "@/assets/escape-campus-logo.png";
+import logoShield from "@/assets/escape-campus-shield.png";
 
 interface LogoProps {
   className?: string;
@@ -12,34 +13,18 @@ interface LogoProps {
  * For icon-only contexts, renders the shield mark cropped from the same lockup.
  */
 export const Logo = ({ className, withText = true, variant = "dark" }: LogoProps) => {
-  if (withText) {
-    return (
-      <img
-        src={logoFull}
-        alt="Escape Campus"
-        className={cn("h-9 w-auto select-none", variant === "light" && "brightness-0 invert", className)}
-        draggable={false}
-      />
-    );
-  }
-  // Icon-only: clip just the shield from the lockup using object-position
+  const src = withText ? logoFull : logoShield;
   return (
-    <div
-      className={cn("h-10 w-10 overflow-hidden", className)}
-      aria-label="Escape Campus"
-      role="img"
-    >
-      <img
-        src={logoFull}
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-        className={cn(
-          "h-full w-auto max-w-none object-cover object-left",
-          variant === "light" && "brightness-0 invert",
-        )}
-        style={{ width: "auto", aspectRatio: "auto" }}
-      />
-    </div>
+    <img
+      src={src}
+      alt="Escape Campus"
+      draggable={false}
+      className={cn(
+        withText ? "h-8 w-auto md:h-9" : "h-10 w-10",
+        "select-none",
+        variant === "light" && "brightness-0 invert",
+        className,
+      )}
+    />
   );
 };
