@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import logoFull from "@/assets/escape-campus-logo.png";
+import logoShield from "@/assets/escape-campus-shield.png";
 
 interface LogoProps {
   className?: string;
@@ -6,40 +8,23 @@ interface LogoProps {
   variant?: "dark" | "light";
 }
 
+/**
+ * Escape Campus logo. Uses the official lockup when withText is true.
+ * For icon-only contexts, renders the shield mark cropped from the same lockup.
+ */
 export const Logo = ({ className, withText = true, variant = "dark" }: LogoProps) => {
-  const stroke = variant === "dark" ? "currentColor" : "currentColor";
+  const src = withText ? logoFull : logoShield;
   return (
-    <div className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg
-        viewBox="0 0 40 48"
-        className="h-9 w-auto"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M2 4h36v22c0 10-8 18-18 18S2 36 2 26V4z"
-          stroke={stroke}
-          strokeWidth="2.5"
-          fill="none"
-        />
-        <text
-          x="20"
-          y="28"
-          textAnchor="middle"
-          fontSize="20"
-          fontWeight="800"
-          fontFamily="Inter, sans-serif"
-          fill={stroke}
-        >
-          E
-        </text>
-      </svg>
-      {withText && (
-        <span className="font-display text-base font-bold tracking-tight">
-          Escape Campus
-        </span>
+    <img
+      src={src}
+      alt="Escape Campus"
+      draggable={false}
+      className={cn(
+        withText ? "h-8 w-auto md:h-9" : "h-10 w-10",
+        "select-none",
+        variant === "light" && "brightness-0 invert",
+        className,
       )}
-    </div>
+    />
   );
 };
