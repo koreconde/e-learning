@@ -107,7 +107,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
           aria-valuenow={Math.round(progress)}
         >
           <motion.div
-            className="h-full bg-gradient-gold"
+            className="h-full bg-accent"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -126,11 +126,11 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
               exit={{ opacity: 0, y: -24 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="mb-4 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-accent">
-                <span className="rounded-full bg-accent/15 px-3 py-1 font-bold text-accent">{q.level}</span>
+              <div className="mb-5 flex items-center gap-2 text-xs uppercase tracking-[0.25em]">
+                <span className="rounded-full bg-foreground px-3 py-1 font-bold text-background">{q.level}</span>
                 <span className="text-muted-foreground">{q.category}</span>
               </div>
-              <h2 className="font-display text-3xl font-semibold leading-tight text-primary md:text-4xl">
+              <h2 className="font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-4xl">
                 {q.text}
               </h2>
 
@@ -143,13 +143,13 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
                       key={i}
                       onClick={() => handleSelect(i)}
                       disabled={selected !== null}
-                      className={`group flex items-center gap-4 rounded-xl border-2 bg-card p-4 text-left transition-all duration-200 hover:border-accent hover:shadow-card disabled:cursor-not-allowed md:p-5 ${
-                        isSel ? "border-accent bg-accent/10 shadow-gold" : "border-border"
+                      className={`group flex items-center gap-4 rounded-2xl border-2 bg-card p-4 text-left transition-all duration-200 hover:border-foreground hover:shadow-card disabled:cursor-not-allowed md:p-5 ${
+                        isSel ? "border-foreground bg-accent/30" : "border-border"
                       }`}
                     >
                       <span
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-display text-sm font-bold uppercase transition-colors ${
-                          isSel ? "bg-gradient-gold text-accent-foreground" : "bg-secondary text-primary group-hover:bg-accent/20"
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold uppercase transition-colors ${
+                          isSel ? "bg-foreground text-background" : "bg-secondary text-foreground group-hover:bg-accent"
                         }`}
                       >
                         {letter}
@@ -164,7 +164,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
                 <button
                   onClick={handleSkip}
                   disabled={selected !== null}
-                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
                 >
                   <SkipForward className="h-3.5 w-3.5" />
                   Non lo so, salta
