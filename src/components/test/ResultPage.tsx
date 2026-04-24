@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { CEFRLevel, Result } from "@/data/questions";
@@ -20,7 +19,7 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
   const shareText = encodeURIComponent(`Ho ottenuto il livello ${result.level} su Escape Campus! Prova anche tu il test gratuito.`);
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-4xl px-4 py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -28,10 +27,11 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           transition={{ duration: 0.7 }}
           className="text-center"
         >
-          <div className="mb-3 text-xs uppercase tracking-[0.3em] text-accent">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-foreground/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-blue" />
             Complimenti{name ? `, ${name.split(" ")[0]}` : ""}
           </div>
-          <h1 className="font-display text-4xl font-bold text-primary md:text-5xl">
+          <h1 className="font-display text-4xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-6xl">
             Il tuo livello di inglese è
           </h1>
 
@@ -41,14 +41,16 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
             transition={{ delay: 0.4, duration: 0.8, type: "spring", stiffness: 90 }}
             className="relative mx-auto mt-8 inline-flex"
           >
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-gold opacity-30 blur-3xl" />
-            <div className="rounded-3xl bg-gradient-navy px-12 py-8 shadow-elegant">
-              <div className="font-display text-7xl font-bold text-accent md:text-8xl">{result.level}</div>
+            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-accent opacity-50 blur-3xl" />
+            <div className="rounded-[2rem] bg-accent px-14 py-10 shadow-yellow">
+              <div className="font-display text-7xl font-black tracking-tight text-accent-foreground md:text-8xl">
+                {result.level}
+              </div>
             </div>
           </motion.div>
 
           <p className="mt-6 text-muted-foreground">
-            Basato su <span className="font-semibold text-primary">{result.score}</span> risposte corrette su {result.total}
+            Basato su <span className="font-semibold text-foreground">{result.score}</span> risposte corrette su {result.total}
           </p>
         </motion.div>
 
@@ -65,11 +67,11 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
             return (
               <div key={lvl} className="flex flex-col items-center gap-2">
                 <div
-                  className={`flex w-14 items-center justify-center rounded-xl font-display text-lg font-bold transition-all md:w-20 md:text-xl ${
+                  className={`flex w-14 items-center justify-center rounded-2xl font-display text-lg font-bold transition-all md:w-20 md:text-xl ${
                     active
-                      ? "h-28 bg-gradient-gold text-accent-foreground shadow-gold md:h-36"
+                      ? "h-28 bg-accent text-accent-foreground shadow-yellow md:h-36"
                       : reached
-                        ? "h-20 bg-primary/15 text-primary md:h-24"
+                        ? "h-20 bg-secondary text-foreground md:h-24"
                         : "h-14 bg-secondary text-muted-foreground md:h-16"
                   }`}
                 >
@@ -85,7 +87,7 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.6 }}
-          className="mx-auto mt-12 max-w-2xl rounded-2xl border border-border bg-card p-8 text-center shadow-card"
+          className="mx-auto mt-12 max-w-2xl rounded-3xl border border-border bg-card p-8 text-center"
         >
           <p className="text-lg leading-relaxed text-foreground">{result.description}</p>
         </motion.div>
@@ -95,26 +97,33 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2, duration: 0.7 }}
-          className="mt-12 overflow-hidden rounded-3xl bg-gradient-navy p-8 text-center text-primary-foreground shadow-elegant md:p-12"
+          className="mt-12 overflow-hidden rounded-[2rem] bg-foreground p-8 text-center text-background shadow-elegant md:p-14"
         >
-          <div className="mx-auto mb-3 inline-block rounded-full border border-accent/40 bg-accent/15 px-4 py-1 text-xs uppercase tracking-[0.25em] text-accent">
+          <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/5 px-4 py-1.5 text-xs font-medium text-background/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Prossimo passo
           </div>
-          <h2 className="font-display text-3xl font-bold leading-tight md:text-4xl">
-            Prenota il tuo Speaking Test gratuito<br />
-            con un <em className="text-accent">Cambridge Teacher</em>
+          <h2 className="font-display text-3xl font-bold leading-tight tracking-[-0.02em] md:text-5xl">
+            Prenota il tuo Speaking Test
+            <br />
+            con un <span className="text-accent">Cambridge Teacher</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-primary-foreground/80">
+          <p className="mx-auto mt-4 max-w-xl text-background/70">
             30 minuti, uno-a-uno, per validare il tuo Speaking e ricevere un piano di studio personalizzato.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
-            <Button variant="hero" size="hero" onClick={() => setBookingOpen(true)} className="group">
-              Prenota il tuo Speaking Test
-              <ArrowRight className="transition-transform group-hover:translate-x-1" />
-            </Button>
+            <button
+              onClick={() => setBookingOpen(true)}
+              className="group flex items-center gap-5 rounded-full bg-accent pl-7 pr-2 py-2 text-base font-semibold text-accent-foreground shadow-yellow transition-all hover:-translate-y-0.5 hover:bg-accent/90 md:text-lg"
+            >
+              <span>Prenota il tuo Speaking Test</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:translate-x-0.5">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </button>
             <button
               onClick={() => toast.success(`Risultato dettagliato inviato a ${email}`)}
-              className="inline-flex items-center gap-2 text-sm text-primary-foreground/70 underline-offset-4 hover:text-accent hover:underline"
+              className="inline-flex items-center gap-2 text-sm text-background/70 underline-offset-4 hover:text-accent hover:underline"
             >
               <Mail className="h-4 w-4" />
               Ricevi l'analisi dettagliata via email

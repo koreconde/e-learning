@@ -1,19 +1,26 @@
-import { Instagram, Linkedin, Youtube, GraduationCap } from "lucide-react";
+import { Instagram, Linkedin, Youtube } from "lucide-react";
+import { Logo } from "./Logo";
 
 export const Footer = () => (
   <footer className="border-t border-border bg-card py-12">
     <div className="container mx-auto px-4">
       <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-navy">
-            <GraduationCap className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <div className="font-display text-lg font-bold text-primary">Escape Campus</div>
-        </div>
-        <div className="flex gap-4 text-muted-foreground">
-          <a href="#" aria-label="Instagram" className="hover:text-accent transition-colors"><Instagram className="h-5 w-5" /></a>
-          <a href="#" aria-label="LinkedIn" className="hover:text-accent transition-colors"><Linkedin className="h-5 w-5" /></a>
-          <a href="#" aria-label="YouTube" className="hover:text-accent transition-colors"><Youtube className="h-5 w-5" /></a>
+        <Logo />
+        <div className="flex gap-2 text-muted-foreground">
+          {[
+            { Icon: Instagram, label: "Instagram" },
+            { Icon: Linkedin, label: "LinkedIn" },
+            { Icon: Youtube, label: "YouTube" },
+          ].map(({ Icon, label }) => (
+            <a
+              key={label}
+              href="#"
+              aria-label={label}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border transition-colors hover:bg-foreground hover:text-background"
+            >
+              <Icon className="h-4 w-4" />
+            </a>
+          ))}
         </div>
       </div>
       <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">

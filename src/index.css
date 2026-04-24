@@ -8,50 +8,55 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Escape Campus — premium navy + warm gold */
-    --background: 50 25% 97%;            /* off-white #FAFAF7 */
-    --foreground: 211 60% 14%;           /* deep navy text */
+    /* Escape Campus — clean white + yellow accent + black ink */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 211 60% 14%;
+    --card-foreground: 0 0% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 211 60% 14%;
+    --popover-foreground: 0 0% 8%;
 
-    --primary: 211 60% 30%;              /* #1F4E79 deep navy */
-    --primary-foreground: 50 25% 97%;
-    --primary-glow: 211 55% 42%;
+    /* Primary = ink black (used for buttons, headings) */
+    --primary: 0 0% 8%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 0% 18%;
 
-    --secondary: 50 20% 93%;
-    --secondary-foreground: 211 60% 18%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 50 18% 92%;
-    --muted-foreground: 211 18% 40%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 38%;
 
-    --accent: 41 49% 60%;                /* #C9A961 warm gold */
-    --accent-foreground: 211 60% 14%;
-    --accent-glow: 41 60% 70%;
+    /* Accent = signature yellow CTA */
+    --accent: 44 96% 62%;                /* warm yellow ~ #FACC3D */
+    --accent-foreground: 0 0% 8%;
+    --accent-glow: 44 100% 72%;
 
-    --success: 95 41% 48%;               /* #70AD47 */
+    /* Brand secondary blue dot accent */
+    --brand-blue: 205 80% 55%;
+
+    --success: 142 65% 42%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 3 47% 53%;            /* #C0504D */
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 211 25% 88%;
-    --input: 211 25% 88%;
-    --ring: 41 49% 60%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 8%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(50 25% 97%) 0%, hsl(50 30% 94%) 50%, hsl(41 40% 90%) 100%);
-    --gradient-navy: linear-gradient(135deg, hsl(211 60% 22%), hsl(211 55% 32%));
-    --gradient-gold: linear-gradient(135deg, hsl(41 55% 55%), hsl(41 65% 68%));
-    --gradient-radial: radial-gradient(circle at 30% 20%, hsl(41 60% 80% / 0.35), transparent 60%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+    --gradient-yellow: linear-gradient(135deg, hsl(44 96% 62%), hsl(40 100% 68%));
+    --gradient-ink: linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 22%));
+    --gradient-radial: radial-gradient(circle at 80% 10%, hsl(44 100% 80% / 0.4), transparent 55%);
 
-    --shadow-elegant: 0 30px 80px -30px hsl(211 60% 20% / 0.25);
-    --shadow-card: 0 4px 24px -8px hsl(211 60% 20% / 0.12);
-    --shadow-gold: 0 18px 40px -16px hsl(41 60% 45% / 0.45);
+    --shadow-elegant: 0 30px 80px -30px hsl(0 0% 0% / 0.18);
+    --shadow-card: 0 2px 16px -4px hsl(0 0% 0% / 0.08);
+    --shadow-yellow: 0 14px 30px -12px hsl(44 96% 50% / 0.45);
 
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -122,6 +127,6 @@ All colors MUST be HSL.
   }
 
   h1, h2, h3, h4 {
-    @apply font-display tracking-tight;
+    @apply font-display tracking-[-0.02em];
   }
 }
