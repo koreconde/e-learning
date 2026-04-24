@@ -14,19 +14,19 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-hero': 'var(--gradient-hero)',
-        'gradient-navy': 'var(--gradient-navy)',
-        'gradient-gold': 'var(--gradient-gold)',
+        'gradient-ink': 'var(--gradient-ink)',
+        'gradient-yellow': 'var(--gradient-yellow)',
         'gradient-radial': 'var(--gradient-radial)',
       },
       boxShadow: {
         elegant: 'var(--shadow-elegant)',
         card: 'var(--shadow-card)',
-        gold: 'var(--shadow-gold)',
+        yellow: 'var(--shadow-yellow)',
       },
       colors: {
         border: "hsl(var(--border))",
@@ -34,6 +34,7 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "brand-blue": "hsl(var(--brand-blue))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
