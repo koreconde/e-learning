@@ -5,7 +5,7 @@ const steps = [
   {
     icon: ClipboardList,
     title: "Rispondi a 20 domande",
-    desc: "Grammatica, vocabolario e comprensione, in soli 10 minuti.",
+    desc: "Grammar, Vocabulary, Listening, Reading, Writing e Speaking. In 12 minuti.",
   },
   {
     icon: GraduationCap,
