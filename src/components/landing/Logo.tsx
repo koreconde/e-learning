@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import logoFull from "@/assets/escape-campus-logo.png";
 
 interface LogoProps {
   className?: string;
@@ -6,40 +7,39 @@ interface LogoProps {
   variant?: "dark" | "light";
 }
 
+/**
+ * Escape Campus logo. Uses the official lockup when withText is true.
+ * For icon-only contexts, renders the shield mark cropped from the same lockup.
+ */
 export const Logo = ({ className, withText = true, variant = "dark" }: LogoProps) => {
-  const stroke = variant === "dark" ? "currentColor" : "currentColor";
+  if (withText) {
+    return (
+      <img
+        src={logoFull}
+        alt="Escape Campus"
+        className={cn("h-9 w-auto select-none", variant === "light" && "brightness-0 invert", className)}
+        draggable={false}
+      />
+    );
+  }
+  // Icon-only: clip just the shield from the lockup using object-position
   return (
-    <div className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg
-        viewBox="0 0 40 48"
-        className="h-9 w-auto"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div
+      className={cn("h-10 w-10 overflow-hidden", className)}
+      aria-label="Escape Campus"
+      role="img"
+    >
+      <img
+        src={logoFull}
+        alt=""
         aria-hidden="true"
-      >
-        <path
-          d="M2 4h36v22c0 10-8 18-18 18S2 36 2 26V4z"
-          stroke={stroke}
-          strokeWidth="2.5"
-          fill="none"
-        />
-        <text
-          x="20"
-          y="28"
-          textAnchor="middle"
-          fontSize="20"
-          fontWeight="800"
-          fontFamily="Inter, sans-serif"
-          fill={stroke}
-        >
-          E
-        </text>
-      </svg>
-      {withText && (
-        <span className="font-display text-base font-bold tracking-tight">
-          Escape Campus
-        </span>
-      )}
+        draggable={false}
+        className={cn(
+          "h-full w-auto max-w-none object-cover object-left",
+          variant === "light" && "brightness-0 invert",
+        )}
+        style={{ width: "auto", aspectRatio: "auto" }}
+      />
     </div>
   );
 };
