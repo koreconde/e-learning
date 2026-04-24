@@ -1,27 +1,44 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, SkipForward } from "lucide-react";
-import { questions } from "@/data/questions";
+import { questions, isAnswerCorrect } from "@/data/questions";
+import {
+  MultipleChoiceView,
+  ListeningView,
+  FillBlankView,
+  ReorderView,
+  WritingView,
+  SpeakingView,
+} from "./QuestionTypes";
 
 interface TestRunnerProps {
   onFinish: (correctIds: number[]) => void;
 }
 
-const TOTAL_SECONDS = 10 * 60;
+const TOTAL_SECONDS = 12 * 60; // a bit more time for written/spoken tasks
+
+type Answer = number | string | string[] | null;
 
 export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
-  const [selected, setSelected] = useState<number | null>(null);
+  const [answers, setAnswers] = useState<Answer[]>(() => questions.map(() => null));
+  const [draft, setDraft] = useState<Answer>(null);
+  const [locked, setLocked] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
 
   const q = questions[index];
   const progress = ((index + 1) / questions.length) * 100;
 
+  // Reset draft when question changes
+  useEffect(() => {
+    setDraft(q.type === "reorder" ? [] : q.type === "multiple-choice" || q.type === "listening" ? null : "");
+    setLocked(false);
+  }, [index, q.type]);
+
   // Timer
   useEffect(() => {
     if (secondsLeft <= 0) {
-      finish(answers);
+      finishWith(answers);
       return;
     }
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
@@ -29,46 +46,58 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft]);
 
-  // Keyboard shortcuts 1-4 / a-d
+  // Keyboard shortcuts only for option-based questions
   useEffect(() => {
+    if (q.type !== "multiple-choice" && q.type !== "listening") return;
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
       const key = e.key.toLowerCase();
-      const map: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3, a: 0, b: 1, c: 2, d: 3 };
-      if (key in map) handleSelect(map[key]);
+      const map: Record<string, number> = {
+        "1": 0, "2": 1, "3": 2, "4": 3,
+        a: 0, b: 1, c: 2, d: 3,
+      };
+      if (key in map) handleOptionSelect(map[key]);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [index, locked]);
 
-  const finish = (final: (number | null)[]) => {
+  const finishWith = (final: Answer[]) => {
     const correctIds: number[] = [];
     final.forEach((ans, i) => {
-      if (ans !== null && ans === questions[i].correct) correctIds.push(questions[i].id);
+      if (isAnswerCorrect(questions[i], ans)) correctIds.push(questions[i].id);
     });
     onFinish(correctIds);
   };
 
-  const advance = (newAnswers: (number | null)[]) => {
+  const advance = (newAnswers: Answer[]) => {
     if (index === questions.length - 1) {
-      finish(newAnswers);
+      finishWith(newAnswers);
     } else {
       setIndex((i) => i + 1);
-      setSelected(null);
     }
   };
 
-  const handleSelect = (optionIdx: number) => {
-    if (selected !== null) return;
-    setSelected(optionIdx);
+  const commit = (answer: Answer, autoAdvance = true) => {
     const newAnswers = [...answers];
-    newAnswers[index] = optionIdx;
+    newAnswers[index] = answer;
     setAnswers(newAnswers);
-    setTimeout(() => advance(newAnswers), 300);
+    setLocked(true);
+    if (autoAdvance) {
+      setTimeout(() => advance(newAnswers), 350);
+    }
+  };
+
+  const handleOptionSelect = (i: number) => {
+    if (locked) return;
+    setDraft(i);
+    commit(i);
   };
 
   const handleSkip = () => {
-    if (selected !== null) return;
+    if (locked) return;
     const newAnswers = [...answers];
     newAnswers[index] = null;
     setAnswers(newAnswers);
@@ -80,10 +109,82 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
   const lowTime = secondsLeft < 60;
 
+  const renderQuestion = () => {
+    switch (q.type) {
+      case "multiple-choice":
+        return (
+          <MultipleChoiceView
+            q={q}
+            selected={typeof draft === "number" ? draft : null}
+            onSelect={handleOptionSelect}
+            locked={locked}
+          />
+        );
+      case "listening":
+        return (
+          <ListeningView
+            q={q}
+            selected={typeof draft === "number" ? draft : null}
+            onSelect={handleOptionSelect}
+            locked={locked}
+          />
+        );
+      case "fill-blank":
+        return (
+          <FillBlankView
+            q={q}
+            value={typeof draft === "string" ? draft : ""}
+            onChange={(v) => setDraft(v)}
+            onSubmit={() => commit(typeof draft === "string" ? draft : "")}
+            locked={locked}
+          />
+        );
+      case "reorder":
+        return (
+          <ReorderView
+            q={q}
+            current={Array.isArray(draft) ? draft : []}
+            onChange={(v) => setDraft(v)}
+            onSubmit={() => commit(Array.isArray(draft) ? draft : [])}
+            locked={locked}
+          />
+        );
+      case "writing":
+        return (
+          <WritingView
+            q={q}
+            value={typeof draft === "string" ? draft : ""}
+            onChange={(v) => setDraft(v)}
+            onSubmit={() => commit(typeof draft === "string" ? draft : "")}
+            locked={locked}
+          />
+        );
+      case "speaking":
+        return (
+          <SpeakingView
+            q={q}
+            transcript={typeof draft === "string" ? draft : ""}
+            onChange={(v) => setDraft(v)}
+            onSubmit={() => commit(typeof draft === "string" ? draft : "")}
+            locked={locked}
+          />
+        );
+    }
+  };
+
+  const skillBadgeColor: Record<string, string> = {
+    Grammar: "bg-foreground text-background",
+    Vocabulary: "bg-foreground text-background",
+    Reading: "bg-foreground text-background",
+    Listening: "bg-brand-blue text-white",
+    Speaking: "bg-destructive text-white",
+    Writing: "bg-accent text-foreground",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gradient-hero">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-gradient-hero">
       {/* Top bar */}
-      <div className="border-b border-border/60 bg-card/80 backdrop-blur">
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-card/90 backdrop-blur">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
           <div className="text-sm font-medium text-muted-foreground">
             Domanda <span className="text-primary font-bold">{index + 1}</span> di {questions.length}
@@ -116,7 +217,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
       </div>
 
       {/* Question */}
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
+      <div className="flex flex-1 items-start justify-center px-4 py-10 md:items-center">
         <div className="w-full max-w-3xl">
           <AnimatePresence mode="wait">
             <motion.div
@@ -127,43 +228,22 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="mb-5 flex items-center gap-2 text-xs uppercase tracking-[0.25em]">
-                <span className="rounded-full bg-foreground px-3 py-1 font-bold text-background">{q.level}</span>
-                <span className="text-muted-foreground">{q.category}</span>
-              </div>
-              <h2 className="font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-4xl">
-                {q.text}
-              </h2>
-
-              <div className="mt-8 grid gap-3">
-                {q.options.map((opt, i) => {
-                  const isSel = selected === i;
-                  const letter = "abcd"[i];
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleSelect(i)}
-                      disabled={selected !== null}
-                      className={`group flex items-center gap-4 rounded-2xl border-2 bg-card p-4 text-left transition-all duration-200 hover:border-foreground hover:shadow-card disabled:cursor-not-allowed md:p-5 ${
-                        isSel ? "border-foreground bg-accent/30" : "border-border"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold uppercase transition-colors ${
-                          isSel ? "bg-foreground text-background" : "bg-secondary text-foreground group-hover:bg-accent"
-                        }`}
-                      >
-                        {letter}
-                      </span>
-                      <span className="text-base text-foreground md:text-lg">{opt}</span>
-                    </button>
-                  );
-                })}
+                <span className="rounded-full bg-foreground px-3 py-1 font-bold text-background">
+                  {q.level}
+                </span>
+                <span
+                  className={`rounded-full px-3 py-1 font-bold ${skillBadgeColor[q.skill] ?? "bg-secondary text-foreground"}`}
+                >
+                  {q.skill}
+                </span>
               </div>
 
-              <div className="mt-6 text-center">
+              {renderQuestion()}
+
+              <div className="mt-8 text-center">
                 <button
                   onClick={handleSkip}
-                  disabled={selected !== null}
+                  disabled={locked}
                   className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
                 >
                   <SkipForward className="h-3.5 w-3.5" />
