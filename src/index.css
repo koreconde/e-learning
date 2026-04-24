@@ -8,35 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Escape Campus — premium navy + warm gold */
+    --background: 50 25% 97%;            /* off-white #FAFAF7 */
+    --foreground: 211 60% 14%;           /* deep navy text */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 211 60% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 211 60% 14%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 211 60% 30%;              /* #1F4E79 deep navy */
+    --primary-foreground: 50 25% 97%;
+    --primary-glow: 211 55% 42%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 50 20% 93%;
+    --secondary-foreground: 211 60% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 50 18% 92%;
+    --muted-foreground: 211 18% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 41 49% 60%;                /* #C9A961 warm gold */
+    --accent-foreground: 211 60% 14%;
+    --accent-glow: 41 60% 70%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --success: 95 41% 48%;               /* #70AD47 */
+    --success-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 3 47% 53%;            /* #C0504D */
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --border: 211 25% 88%;
+    --input: 211 25% 88%;
+    --ring: 41 49% 60%;
+
+    --radius: 0.75rem;
+
+    --gradient-hero: linear-gradient(135deg, hsl(50 25% 97%) 0%, hsl(50 30% 94%) 50%, hsl(41 40% 90%) 100%);
+    --gradient-navy: linear-gradient(135deg, hsl(211 60% 22%), hsl(211 55% 32%));
+    --gradient-gold: linear-gradient(135deg, hsl(41 55% 55%), hsl(41 65% 68%));
+    --gradient-radial: radial-gradient(circle at 30% 20%, hsl(41 60% 80% / 0.35), transparent 60%);
+
+    --shadow-elegant: 0 30px 80px -30px hsl(211 60% 20% / 0.25);
+    --shadow-card: 0 4px 24px -8px hsl(211 60% 20% / 0.12);
+    --shadow-gold: 0 18px 40px -16px hsl(41 60% 45% / 0.45);
+
+    --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +117,11 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
   }
 }
