@@ -4,6 +4,7 @@ import { ArrowRight, Mail, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { CEFRLevel, Result } from "@/data/questions";
+import { fbqTrack } from "@/lib/fpixel";
 
 const LEVELS: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
 const CALENDLY_URL = "https://calendly.com/escape-campus/speaking-test";
@@ -113,7 +114,13 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
             <button
-              onClick={() => setBookingOpen(true)}
+              onClick={() => {
+                fbqTrack("Schedule", {
+                  content_name: "Speaking Test Booking",
+                  level: result.level,
+                });
+                setBookingOpen(true);
+              }}
               className="group flex items-center gap-5 rounded-full bg-accent pl-7 pr-2 py-2 text-base font-semibold text-accent-foreground shadow-yellow transition-all hover:-translate-y-0.5 hover:bg-accent/90 md:text-lg"
             >
               <span>Prenota il tuo Speaking Test</span>
