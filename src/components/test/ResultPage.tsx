@@ -118,6 +118,7 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
                 fbqTrack("Schedule", {
                   content_name: "Speaking Test Booking",
                   level: result.level,
+                  score: result.score,
                 });
                 setBookingOpen(true);
               }}
