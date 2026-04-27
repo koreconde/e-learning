@@ -8,6 +8,7 @@ import { Footer } from "@/components/landing/Footer";
 import { TestRunner } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
 import { calculateLevel, type Result } from "@/data/questions";
+import { fbqTrack } from "@/lib/fpixel";
 
 type Stage = "landing" | "test" | "result";
 
@@ -22,6 +23,7 @@ const Index = () => {
 
   const handleLeadSubmit = (l: Lead) => {
     setLead(l);
+    fbqTrack("Lead", { content_name: "English Test Lead" });
     // TODO: connect Lovable Cloud (Supabase) — insert into `leads` table
     setStage("test");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -30,6 +32,11 @@ const Index = () => {
   const handleTestFinish = (correctIds: number[]) => {
     const r = calculateLevel(correctIds);
     setResult(r);
+    fbqTrack("CompleteRegistration", {
+      content_name: "English Test Completed",
+      value: r.score,
+      level: r.level,
+    });
     // TODO: update lead row with level + score
     setStage("result");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
