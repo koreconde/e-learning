@@ -24,7 +24,7 @@ export const Footer = () => (
         </div>
       </div>
       <div className="mt-8 flex flex-col gap-3 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-        <div>© {new Date().getFullYear()} Escape Campus SRL · P.IVA [placeholder] · Bari, Italia</div>
+        <div>© {new Date().getFullYear()} Escape Campus SRL · P.IVA IT08226570722 · Bari, Italia</div>
         <div className="flex gap-5">
           <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
           <a href="#" className="hover:text-foreground transition-colors">Cookie Policy</a>
