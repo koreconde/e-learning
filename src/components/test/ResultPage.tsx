@@ -7,7 +7,7 @@ import type { CEFRLevel, Result } from "@/data/questions";
 import { fbqTrack } from "@/lib/fpixel";
 
 const LEVELS: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
-const CALENDLY_URL = "https://calendly.com/escape-campus/speaking-test";
+const CALENDLY_URL = "https://calendly.com/francescafilipp";
 
 interface ResultPageProps {
   result: Result;
