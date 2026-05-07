@@ -6,9 +6,11 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { LeadForm, type Lead } from "@/components/landing/LeadForm";
 import { Footer } from "@/components/landing/Footer";
 import { TestRunner } from "@/components/test/TestRunner";
+import type { AnsweredQuestion } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
 import { calculateLevel, type Result } from "@/data/questions";
 import { fbqTrack } from "@/lib/fpixel";
+import { supabase } from "@/integrations/supabase/client";
 
 type Stage = "landing" | "test" | "result";
 
@@ -24,12 +26,11 @@ const Index = () => {
   const handleLeadSubmit = (l: Lead) => {
     setLead(l);
     fbqTrack("Lead", { content_name: "English Test Lead" });
-    // TODO: connect Lovable Cloud (Supabase) — insert into `leads` table
     setStage("test");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
 
-  const handleTestFinish = (correctIds: number[]) => {
+  const handleTestFinish = (correctIds: number[], details: AnsweredQuestion[]) => {
     const r = calculateLevel(correctIds);
     setResult(r);
     fbqTrack("CompleteRegistration", {
@@ -37,7 +38,39 @@ const Index = () => {
       value: r.score,
       level: r.level,
     });
-    // TODO: update lead row with level + score
+    if (lead) {
+      const errors = details
+        .filter((d) => !d.correct)
+        .map(({ correct, ...e }) => e);
+      const idemBase = `${lead.email}-${Date.now()}`;
+      const payload = {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        level: r.level,
+        score: r.score,
+        total: r.total,
+        errors,
+      };
+      // Send result to lead
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "test-result-lead",
+          recipientEmail: lead.email,
+          idempotencyKey: `lead-${idemBase}`,
+          templateData: payload,
+        },
+      });
+      // Copy to admin
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "test-result-admin",
+          recipientEmail: "info@englishinfinity.io",
+          idempotencyKey: `admin-${idemBase}`,
+          templateData: payload,
+        },
+      });
+    }
     setStage("result");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
