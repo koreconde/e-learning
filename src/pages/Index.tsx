@@ -70,6 +70,17 @@ const Index = () => {
           templateData: payload,
         },
       });
+      // Copy to additional admins
+      ["giada@escapecampus.it", "raff@escapecampus.it"].forEach((addr) => {
+        supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "test-result-admin",
+            recipientEmail: addr,
+            idempotencyKey: `admin-${addr}-${idemBase}`,
+            templateData: payload,
+          },
+        });
+      });
     }
     setStage("result");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
