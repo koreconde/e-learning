@@ -30,6 +30,52 @@ const TOTAL_SECONDS = 12 * 60; // a bit more time for written/spoken tasks
 
 type Answer = number | string | string[] | null;
 
+function getPrompt(q: Question): string {
+  switch (q.type) {
+    case "multiple-choice":
+    case "fill-blank":
+      return q.text;
+    case "listening":
+      return q.prompt;
+    case "reorder":
+    case "writing":
+    case "speaking":
+      return q.prompt;
+  }
+}
+
+function formatAnswer(q: Question, ans: Answer): string {
+  if (ans === null || ans === undefined || ans === "") return "";
+  switch (q.type) {
+    case "multiple-choice":
+    case "listening":
+      return typeof ans === "number" ? q.options[ans] ?? "" : "";
+    case "fill-blank":
+      return typeof ans === "string" ? ans : "";
+    case "reorder":
+      return Array.isArray(ans) ? ans.join(" ") : "";
+    case "writing":
+    case "speaking":
+      return typeof ans === "string" ? ans : "";
+  }
+}
+
+function getCorrectAnswer(q: Question): string {
+  switch (q.type) {
+    case "multiple-choice":
+    case "listening":
+      return q.options[q.correct] ?? "";
+    case "fill-blank":
+      return q.accepted[0] ?? "";
+    case "reorder":
+      return q.correct.join(" ");
+    case "writing":
+      return `(min ${q.minWords} parole)`;
+    case "speaking":
+      return q.targetPhrase;
+  }
+}
+
 export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>(() => questions.map(() => null));
