@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, SkipForward } from "lucide-react";
 import { questions, isAnswerCorrect } from "@/data/questions";
+import type { Question } from "@/data/questions";
 import {
   MultipleChoiceView,
   ListeningView,
