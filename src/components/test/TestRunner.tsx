@@ -11,8 +11,18 @@ import {
   SpeakingView,
 } from "./QuestionTypes";
 
+export interface AnsweredQuestion {
+  questionNumber: number;
+  level: string;
+  skill: string;
+  prompt: string;
+  userAnswer: string;
+  correctAnswer: string;
+  correct: boolean;
+}
+
 interface TestRunnerProps {
-  onFinish: (correctIds: number[]) => void;
+  onFinish: (correctIds: number[], details: AnsweredQuestion[]) => void;
 }
 
 const TOTAL_SECONDS = 12 * 60; // a bit more time for written/spoken tasks
@@ -66,10 +76,21 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
 
   const finishWith = (final: Answer[]) => {
     const correctIds: number[] = [];
-    final.forEach((ans, i) => {
-      if (isAnswerCorrect(questions[i], ans)) correctIds.push(questions[i].id);
+    const details: AnsweredQuestion[] = final.map((ans, i) => {
+      const q = questions[i];
+      const correct = isAnswerCorrect(q, ans);
+      if (correct) correctIds.push(q.id);
+      return {
+        questionNumber: i + 1,
+        level: q.level,
+        skill: q.skill,
+        prompt: getPrompt(q),
+        userAnswer: formatAnswer(q, ans),
+        correctAnswer: getCorrectAnswer(q),
+        correct,
+      };
     });
-    onFinish(correctIds);
+    onFinish(correctIds, details);
   };
 
   const advance = (newAnswers: Answer[]) => {
