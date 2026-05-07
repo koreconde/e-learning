@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, SkipForward } from "lucide-react";
 import { questions, isAnswerCorrect } from "@/data/questions";
+import type { Question } from "@/data/questions";
 import {
   MultipleChoiceView,
   ListeningView,
@@ -11,13 +12,69 @@ import {
   SpeakingView,
 } from "./QuestionTypes";
 
+export interface AnsweredQuestion {
+  questionNumber: number;
+  level: string;
+  skill: string;
+  prompt: string;
+  userAnswer: string;
+  correctAnswer: string;
+  correct: boolean;
+}
+
 interface TestRunnerProps {
-  onFinish: (correctIds: number[]) => void;
+  onFinish: (correctIds: number[], details: AnsweredQuestion[]) => void;
 }
 
 const TOTAL_SECONDS = 12 * 60; // a bit more time for written/spoken tasks
 
 type Answer = number | string | string[] | null;
+
+function getPrompt(q: Question): string {
+  switch (q.type) {
+    case "multiple-choice":
+    case "fill-blank":
+      return q.text;
+    case "listening":
+      return q.prompt;
+    case "reorder":
+    case "writing":
+    case "speaking":
+      return q.prompt;
+  }
+}
+
+function formatAnswer(q: Question, ans: Answer): string {
+  if (ans === null || ans === undefined || ans === "") return "";
+  switch (q.type) {
+    case "multiple-choice":
+    case "listening":
+      return typeof ans === "number" ? q.options[ans] ?? "" : "";
+    case "fill-blank":
+      return typeof ans === "string" ? ans : "";
+    case "reorder":
+      return Array.isArray(ans) ? ans.join(" ") : "";
+    case "writing":
+    case "speaking":
+      return typeof ans === "string" ? ans : "";
+  }
+}
+
+function getCorrectAnswer(q: Question): string {
+  switch (q.type) {
+    case "multiple-choice":
+    case "listening":
+      return q.options[q.correct] ?? "";
+    case "fill-blank":
+      return q.accepted[0] ?? "";
+    case "reorder":
+      return q.correct.join(" ");
+    case "writing":
+      return `(min ${q.minWords} parole)`;
+    case "speaking":
+      return q.targetPhrase;
+  }
+}
 
 export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const [index, setIndex] = useState(0);
@@ -66,10 +123,21 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
 
   const finishWith = (final: Answer[]) => {
     const correctIds: number[] = [];
-    final.forEach((ans, i) => {
-      if (isAnswerCorrect(questions[i], ans)) correctIds.push(questions[i].id);
+    const details: AnsweredQuestion[] = final.map((ans, i) => {
+      const q = questions[i];
+      const correct = isAnswerCorrect(q, ans);
+      if (correct) correctIds.push(q.id);
+      return {
+        questionNumber: i + 1,
+        level: q.level,
+        skill: q.skill,
+        prompt: getPrompt(q),
+        userAnswer: formatAnswer(q, ans),
+        correctAnswer: getCorrectAnswer(q),
+        correct,
+      };
     });
-    onFinish(correctIds);
+    onFinish(correctIds, details);
   };
 
   const advance = (newAnswers: Answer[]) => {
