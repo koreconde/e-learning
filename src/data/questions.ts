@@ -308,12 +308,26 @@ export function calculateLevel(correctIds: number[]): Result {
   const b2 = inRange(13, 16);
   const c1 = inRange(17, 20);
 
+  // Highest band where the user got at least 2/4, with all lower bands also ≥2/4.
+  // This avoids penalising users who skip an easy question but perform well overall.
+  const bands: { level: CEFRLevel; score: number }[] = [
+    { level: "A1", score: a1 },
+    { level: "A2", score: a2 },
+    { level: "B1", score: b1 },
+    { level: "B2", score: b2 },
+    { level: "C1", score: c1 },
+  ];
   let level: CEFRLevel = "A1";
-  if (a1 >= 3 && a2 >= 3 && b1 >= 3 && b2 >= 3 && c1 >= 3) level = "C1";
-  else if (a1 >= 3 && a2 >= 3 && b1 >= 3 && b2 >= 3) level = "B2";
-  else if (a1 >= 3 && a2 >= 3 && b1 >= 3) level = "B1";
-  else if (a1 >= 3 && a2 >= 3) level = "A2";
-  else level = "A1";
+  for (const b of bands) {
+    if (b.score >= 2) level = b.level;
+    else break;
+  }
+  // Safety net: if total score is high but logic above stuck low, bump up by total.
+  const total = correctIds.length;
+  const minByTotal: CEFRLevel =
+    total >= 17 ? "C1" : total >= 13 ? "B2" : total >= 10 ? "B1" : total >= 6 ? "A2" : "A1";
+  const order: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
+  if (order.indexOf(minByTotal) > order.indexOf(level)) level = minByTotal;
 
   const descriptions: Record<CEFRLevel, string> = {
     A1: "Sei all'inizio del tuo percorso. Comprendi e usi espressioni quotidiane di base. Con un metodo strutturato puoi fare enormi progressi in pochi mesi.",
