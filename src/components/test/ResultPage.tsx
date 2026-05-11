@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Mail, Share2 } from "lucide-react";
+import { ArrowRight, Mail, Share2, MessageCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { CEFRLevel, Result } from "@/data/questions";
@@ -8,6 +8,7 @@ import { fbqTrack } from "@/lib/fpixel";
 
 const LEVELS: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
 const CALENDLY_URL = "https://calendly.com/francescafilipp";
+const WHATSAPP_NUMBER = "393770268033";
 
 interface ResultPageProps {
   result: Result;
@@ -129,6 +130,25 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
                 <ArrowRight className="h-4 w-4" />
               </span>
             </button>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                `Ciao! Ho appena completato il test di inglese (livello ${result.level}) e vorrei maggiori informazioni.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                fbqTrack("Contact", {
+                  content_name: "WhatsApp Contact",
+                  level: result.level,
+                })
+              }
+              className="group flex items-center gap-5 rounded-full bg-success pl-7 pr-2 py-2 text-base font-semibold text-white shadow-elegant transition-all hover:-translate-y-0.5 hover:bg-success/90 md:text-lg"
+            >
+              <span>Scrivici su WhatsApp</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-background/15 text-white transition-transform group-hover:translate-x-0.5">
+                <MessageCircle className="h-5 w-5" />
+              </span>
+            </a>
             <button
               onClick={() => toast.success(`Risultato dettagliato inviato a ${email}`)}
               className="inline-flex items-center gap-2 text-sm text-background/70 underline-offset-4 hover:text-accent hover:underline"
