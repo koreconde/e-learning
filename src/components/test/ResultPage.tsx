@@ -136,13 +136,20 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
+              onClick={(e) => {
                 fbqTrack("Contact", {
                   content_name: "WhatsApp Contact",
                   level: result.level,
-                })
-              }
-              className="group flex items-center gap-5 rounded-full bg-success pl-7 pr-2 py-2 text-base font-semibold text-white shadow-elegant transition-all hover:-translate-y-0.5 hover:bg-success/90 md:text-lg"
+                });
+                // Fallback for sandboxed iframes (e.g. Lovable preview) that block target=_blank
+                const url = (e.currentTarget as HTMLAnchorElement).href;
+                const win = window.open(url, "_blank", "noopener,noreferrer");
+                if (!win) {
+                  e.preventDefault();
+                  window.top?.location.assign(url);
+                }
+              }}
+              className="group flex items-center gap-5 rounded-full bg-success pl-7 pr-2 py-2 text-base font-semibold text-success-foreground shadow-elegant transition-all hover:-translate-y-0.5 hover:bg-success/90 md:text-lg"
             >
               <span>Scrivici su WhatsApp</span>
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-background/15 text-white transition-transform group-hover:translate-x-0.5">
