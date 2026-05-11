@@ -132,7 +132,7 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
             </button>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                `Ciao! Ho appena completato il test di inglese (livello ${result.level}) e vorrei maggiori informazioni.`
+                `Salve, ho appena completato il test di inglese di Escape Campus (livello ottenuto: ${result.level}) e vorrei ricevere maggiori informazioni sui vostri corsi. Grazie.`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
