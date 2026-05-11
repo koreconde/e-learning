@@ -285,8 +285,8 @@ export const questions: Question[] = [
     skill: "Writing",
     type: "writing",
     prompt:
-      "Argomenta in inglese (almeno 50 parole): 'Remote work is more productive than office work.' Esprimi la tua opinione con esempi.",
-    minWords: 50,
+      "Argomenta in inglese (almeno 20 parole): 'Remote work is more productive than office work.' Esprimi la tua opinione con esempi.",
+    minWords: 20,
     keywords: ["however", "furthermore", "in my opinion", "for instance", "therefore"],
   },
 ];
