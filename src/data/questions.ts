@@ -323,15 +323,11 @@ export function calculateLevel(correctIds: number[]): Result {
     else break;
   }
   // Cap by total score: the band-by-band logic can over-promote users who
-  // happened to get 2 correct answers in every band. The total score sets
-  // both a floor (bump up) and a ceiling (cap down) for the final level.
+  // happened to get 2 correct answers in every band. Total score is the ceiling.
   const total = correctIds.length;
   const capByTotal: CEFRLevel =
     total >= 17 ? "C1" : total >= 13 ? "B2" : total >= 10 ? "B1" : total >= 6 ? "A2" : "A1";
   const order: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
-  // Floor: never lower than what total score guarantees.
-  if (order.indexOf(capByTotal) > order.indexOf(level)) level = capByTotal;
-  // Ceiling: never higher than what total score supports.
   if (order.indexOf(capByTotal) < order.indexOf(level)) level = capByTotal;
 
   const descriptions: Record<CEFRLevel, string> = {
