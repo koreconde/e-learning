@@ -322,12 +322,13 @@ export function calculateLevel(correctIds: number[]): Result {
     if (b.score >= 2) level = b.level;
     else break;
   }
-  // Safety net: if total score is high but logic above stuck low, bump up by total.
+  // Cap by total score: the band-by-band logic can over-promote users who
+  // happened to get 2 correct answers in every band. Total score is the ceiling.
   const total = correctIds.length;
-  const minByTotal: CEFRLevel =
+  const capByTotal: CEFRLevel =
     total >= 17 ? "C1" : total >= 13 ? "B2" : total >= 10 ? "B1" : total >= 6 ? "A2" : "A1";
   const order: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
-  if (order.indexOf(minByTotal) > order.indexOf(level)) level = minByTotal;
+  if (order.indexOf(capByTotal) < order.indexOf(level)) level = capByTotal;
 
   const descriptions: Record<CEFRLevel, string> = {
     A1: "Sei all'inizio del tuo percorso. Comprendi e usi espressioni quotidiane di base. Con un metodo strutturato puoi fare enormi progressi in pochi mesi.",
