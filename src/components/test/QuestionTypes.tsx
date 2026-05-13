@@ -342,15 +342,25 @@ export const SpeakingView = ({
 }) => {
   const [recording, setRecording] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [recogError, setRecogError] = useState<string | null>(null);
+  const [showTextFallback, setShowTextFallback] = useState(false);
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
 
+  // Detect in-app browsers (Instagram, Facebook, TikTok, LinkedIn) where
+  // the Web Speech API is unreliable even when the constructor exists.
+  const isInAppBrowser =
+    typeof navigator !== "undefined" &&
+    /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Twitter|Line|TikTok|LinkedInApp/i.test(navigator.userAgent);
+
   useEffect(() => {
+    setRecogError(null);
+    setShowTextFallback(false);
     const w = window as unknown as {
       SpeechRecognition?: new () => SpeechRecognitionLike;
       webkitSpeechRecognition?: new () => SpeechRecognitionLike;
     };
     const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR) {
+    if (!SR || isInAppBrowser) {
       setSupported(false);
       return;
     }
@@ -362,7 +372,15 @@ export const SpeakingView = ({
       const text = e.results[0]?.[0]?.transcript ?? "";
       onChange(text);
     };
-    recog.onerror = () => setRecording(false);
+    recog.onerror = (e) => {
+      setRecording(false);
+      const code = e?.error ?? "error";
+      setRecogError(code);
+      // On permission/hardware errors, surface the text fallback automatically.
+      if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
+        setShowTextFallback(true);
+      }
+    };
     recog.onend = () => setRecording(false);
     recogRef.current = recog;
     return () => recog.stop();
@@ -385,14 +403,19 @@ export const SpeakingView = ({
       setRecording(false);
     } else {
       onChange("");
+      setRecogError(null);
       try {
         recogRef.current.start();
         setRecording(true);
       } catch {
         setRecording(false);
+        setRecogError("start-failed");
+        setShowTextFallback(true);
       }
     }
   };
+
+  const useTextFallback = !supported || showTextFallback;
 
   return (
     <>
@@ -415,10 +438,27 @@ export const SpeakingView = ({
         </p>
       </div>
 
-      {!supported ? (
+      {useTextFallback ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
-          Il tuo browser non supporta il riconoscimento vocale. Scrivi qui sotto cosa hai
-          pronunciato:
+          {isInAppBrowser ? (
+            <>
+              Il browser in-app (Instagram/Facebook) non supporta il microfono.
+              Per registrare la voce apri il link in <strong>Safari</strong> o{" "}
+              <strong>Chrome</strong>. In alternativa scrivi qui sotto la frase che
+              avresti pronunciato:
+            </>
+          ) : recogError === "not-allowed" || recogError === "service-not-allowed" ? (
+            <>
+              Permesso microfono negato. Abilita il microfono nelle impostazioni del
+              browser, oppure scrivi qui sotto la frase:
+            </>
+          ) : recogError === "audio-capture" ? (
+            <>Nessun microfono rilevato. Scrivi qui sotto la frase:</>
+          ) : recogError ? (
+            <>Riconoscimento vocale non disponibile. Scrivi qui sotto la frase:</>
+          ) : (
+            <>Il tuo browser non supporta il riconoscimento vocale. Scrivi qui sotto cosa hai pronunciato:</>
+          )}
           <Input
             value={transcript}
             disabled={locked}
@@ -450,6 +490,13 @@ export const SpeakingView = ({
           <p className="mt-3 text-sm font-medium text-muted-foreground">
             {recording ? "Sto ascoltando... parla ora" : "Tocca per registrare"}
           </p>
+          <button
+            type="button"
+            onClick={() => setShowTextFallback(true)}
+            className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Il microfono non funziona? Scrivi la risposta
+          </button>
           {transcript && (
             <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
