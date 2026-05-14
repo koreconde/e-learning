@@ -110,11 +110,18 @@ export type Database = {
           email: string
           errors: Json | null
           id: string
+          landing_url: string | null
           level: string | null
           name: string
           phone: string
+          referrer: string | null
           score: number | null
           total: number | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           completed?: boolean
@@ -124,11 +131,18 @@ export type Database = {
           email: string
           errors?: Json | null
           id?: string
+          landing_url?: string | null
           level?: string | null
           name: string
           phone: string
+          referrer?: string | null
           score?: number | null
           total?: number | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           completed?: boolean
@@ -138,11 +152,18 @@ export type Database = {
           email?: string
           errors?: Json | null
           id?: string
+          landing_url?: string | null
           level?: string | null
           name?: string
           phone?: string
+          referrer?: string | null
           score?: number | null
           total?: number | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }

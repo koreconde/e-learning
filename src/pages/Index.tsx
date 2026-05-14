@@ -30,9 +30,19 @@ const Index = () => {
     ttqTrack("SubmitForm", { content_name: "English Test Lead" });
     // Persist lead to DB FIRST so we never lose it, even if email/test step fails
     try {
+      const params = new URLSearchParams(window.location.search);
+      const attribution = {
+        utm_source: params.get("utm_source"),
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign"),
+        utm_content: params.get("utm_content"),
+        utm_term: params.get("utm_term"),
+        referrer: document.referrer || null,
+        landing_url: window.location.href,
+      };
       const { data, error } = await supabase
         .from("leads")
-        .insert({ name: l.name, email: l.email, phone: l.phone, consent: true })
+        .insert({ name: l.name, email: l.email, phone: l.phone, consent: true, ...attribution })
         .select("id")
         .single();
       if (!error && data) setLeadId(data.id);
