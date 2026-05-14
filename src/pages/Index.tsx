@@ -17,15 +17,27 @@ type Stage = "landing" | "test" | "result";
 const Index = () => {
   const [stage, setStage] = useState<Stage>("landing");
   const [lead, setLead] = useState<Lead | null>(null);
+  const [leadId, setLeadId] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
 
   const scrollToForm = () => {
     document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleLeadSubmit = (l: Lead) => {
+  const handleLeadSubmit = async (l: Lead) => {
     setLead(l);
     fbqTrack("Lead", { content_name: "English Test Lead" });
+    // Persist lead to DB FIRST so we never lose it, even if email/test step fails
+    try {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert({ name: l.name, email: l.email, phone: l.phone, consent: true })
+        .select("id")
+        .single();
+      if (!error && data) setLeadId(data.id);
+    } catch (_) {
+      // non-blocking
+    }
     // Notify admins immediately so we capture the lead even if the test isn't completed
     const idemBase = `${l.email}-${Date.now()}`;
     const payload = { name: l.name, email: l.email, phone: l.phone };
@@ -55,6 +67,20 @@ const Index = () => {
       const errors = details
         .filter((d) => !d.correct)
         .map(({ correct, ...e }) => e);
+      // Update the lead row with results
+      if (leadId) {
+        supabase
+          .from("leads")
+          .update({
+            completed: true,
+            level: r.level,
+            score: r.score,
+            total: r.total,
+            errors,
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", leadId);
+      }
       const idemBase = `${lead.email}-${Date.now()}`;
       const payload = {
         name: lead.name,
