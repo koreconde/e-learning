@@ -9,7 +9,7 @@ import { TestRunner } from "@/components/test/TestRunner";
 import type { AnsweredQuestion } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
 import { calculateLevel, type Result } from "@/data/questions";
-import { fbqTrack } from "@/lib/fpixel";
+import { fbqTrack, ttqTrack } from "@/lib/fpixel";
 import { supabase } from "@/integrations/supabase/client";
 
 type Stage = "landing" | "test" | "result";
@@ -27,6 +27,7 @@ const Index = () => {
   const handleLeadSubmit = async (l: Lead) => {
     setLead(l);
     fbqTrack("Lead", { content_name: "English Test Lead" });
+    ttqTrack("SubmitForm", { content_name: "English Test Lead" });
     // Persist lead to DB FIRST so we never lose it, even if email/test step fails
     try {
       const { data, error } = await supabase
@@ -59,6 +60,11 @@ const Index = () => {
     const r = calculateLevel(correctIds);
     setResult(r);
     fbqTrack("CompleteRegistration", {
+      content_name: "English Test Completed",
+      value: r.score,
+      level: r.level,
+    });
+    ttqTrack("CompleteRegistration", {
       content_name: "English Test Completed",
       value: r.score,
       level: r.level,
