@@ -28,6 +28,7 @@ const Index = () => {
     setLead(l);
     fbqTrack("Lead", { content_name: "English Test Lead" });
     ttqTrack("SubmitForm", { content_name: "English Test Lead" });
+    ttqTrack("CompleteRegistration", { content_name: "Test inglese - Lead acquisito" });
     // Persist lead to DB FIRST so we never lose it, even if email/test step fails
     try {
       const params = new URLSearchParams(window.location.search);
