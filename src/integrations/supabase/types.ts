@@ -101,6 +101,51 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          consent: boolean
+          created_at: string
+          email: string
+          errors: Json | null
+          id: string
+          level: string | null
+          name: string
+          phone: string
+          score: number | null
+          total: number | null
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          consent?: boolean
+          created_at?: string
+          email: string
+          errors?: Json | null
+          id?: string
+          level?: string | null
+          name: string
+          phone: string
+          score?: number | null
+          total?: number | null
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          consent?: boolean
+          created_at?: string
+          email?: string
+          errors?: Json | null
+          id?: string
+          level?: string | null
+          name?: string
+          phone?: string
+          score?: number | null
+          total?: number | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
