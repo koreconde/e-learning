@@ -26,6 +26,19 @@ const Index = () => {
   const handleLeadSubmit = (l: Lead) => {
     setLead(l);
     fbqTrack("Lead", { content_name: "English Test Lead" });
+    // Notify admins immediately so we capture the lead even if the test isn't completed
+    const idemBase = `${l.email}-${Date.now()}`;
+    const payload = { name: l.name, email: l.email, phone: l.phone };
+    ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"].forEach((addr) => {
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "new-lead-admin",
+          recipientEmail: addr,
+          idempotencyKey: `newlead-${addr}-${idemBase}`,
+          templateData: payload,
+        },
+      });
+    });
     setStage("test");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
