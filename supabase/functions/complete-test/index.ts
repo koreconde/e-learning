@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
   };
 
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const invokeHeaders = { "x-internal-email-secret": serviceRoleKey };
+  const invokeHeaders = { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey };
 
   // Send result to lead
   supabase.functions
