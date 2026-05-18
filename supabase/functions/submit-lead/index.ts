@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
     admins.map((addr) =>
       supabase.functions
         .invoke("send-transactional-email", {
-          headers: { "x-internal-email-secret": serviceRoleKey },
+          headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey },
           body: {
             templateName: "new-lead-admin",
             recipientEmail: addr,
