@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
+import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -118,6 +119,12 @@ Deno.serve(async (req) => {
   if (!PHONE_RE.test(data.phone)) {
     return jsonResponse({ error: "Numero di telefono non valido" }, 400);
   }
+  const parsedPhone = parsePhoneNumberFromString(data.phone, "IT");
+  if (!parsedPhone || !parsedPhone.isValid()) {
+    return jsonResponse({ error: "Inserisci un numero di telefono reale e valido" }, 400);
+  }
+  // Normalize to E.164 for storage
+  const normalizedPhone = parsedPhone.number;
   const domain = data.email.split("@")[1] ?? "";
   if (DISPOSABLE_DOMAINS.has(domain)) {
     return jsonResponse({ error: "Utilizza un indirizzo email reale" }, 400);
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
     .upsert({
       name: data.name,
       email: data.email,
-      phone: data.phone,
+      phone: normalizedPhone,
       consent: true,
       lead_token: leadToken,
       utm_source: data.attribution.utm_source ?? null,
