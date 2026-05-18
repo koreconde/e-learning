@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-const TURNSTILE_SITE_KEY = "0x4AAAAAADRxpcDB6-aooI00";
+const TURNSTILE_SITE_KEY = "0x4AAAAAADRxpcDB6-aooIOO";
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 interface Props {
