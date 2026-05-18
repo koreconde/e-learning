@@ -111,6 +111,7 @@ export type Database = {
           errors: Json | null
           id: string
           landing_url: string | null
+          lead_token: string | null
           level: string | null
           name: string
           phone: string
@@ -132,6 +133,7 @@ export type Database = {
           errors?: Json | null
           id?: string
           landing_url?: string | null
+          lead_token?: string | null
           level?: string | null
           name: string
           phone: string
@@ -153,6 +155,7 @@ export type Database = {
           errors?: Json | null
           id?: string
           landing_url?: string | null
+          lead_token?: string | null
           level?: string | null
           name?: string
           phone?: string
