@@ -18,7 +18,7 @@ const FROM_DOMAIN = "test.englishinfinity.io"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, x-client-info, apikey, content-type, x-internal-email-secret',
 }
 
 // Generate a cryptographically random 32-byte hex token
@@ -30,9 +30,9 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth note: this function is callable only by trusted backend functions.
+// The gateway JWT check is disabled because Lovable Cloud may provide non-JWT
+// secret keys; we verify the internal service key in-code instead.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -52,6 +52,15 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  const internalSecret = req.headers.get('x-internal-email-secret')
+  if (internalSecret !== supabaseServiceKey) {
+    console.warn('Unauthorized email send attempt')
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   // Parse request body
