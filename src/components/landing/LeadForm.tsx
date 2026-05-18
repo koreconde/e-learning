@@ -110,10 +110,11 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-accent/40 bg-accent/10 p-4 text-sm text-background/90">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
             <p>
-              <span className="font-semibold">Attenzione:</span> questo è un test
-              di alto livello tecnologico, riservato esclusivamente a chi è
-              realmente interessato a migliorare il proprio inglese. Se non hai
-              intenzione di impegnarti, ti preghiamo di non procedere.
+              <span className="font-semibold">Attenzione:</span> questo test
+              utilizza tecnologie AI avanzate che consumano risorse ed energia.
+              È riservato esclusivamente a chi è realmente interessato a
+              migliorare il proprio inglese. Se non hai intenzione di
+              impegnarti, ti preghiamo di non procedere.
             </p>
           </div>
         </motion.div>
