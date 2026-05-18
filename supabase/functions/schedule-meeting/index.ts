@@ -129,6 +129,20 @@ Deno.serve(async (req) => {
     );
   }
 
+  // Update lead status to reflect that a meeting has been scheduled
+  const meetingNote = `Meeting fissato per ${start.toLocaleString("it-IT", { timeZone: "Europe/Rome" })}${
+    data.hangoutLink ? ` · ${data.hangoutLink}` : ""
+  }`;
+  await admin
+    .from("leads")
+    .update({
+      call_status: "meeting_fissato",
+      call_updated_at: new Date().toISOString(),
+      call_updated_by: userData.user.id,
+      call_notes: meetingNote,
+    })
+    .eq("id", lead.id);
+
   return json({
     success: true,
     eventId: data.id,
