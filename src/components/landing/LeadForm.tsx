@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export interface Lead {
   name: string;
@@ -32,7 +33,11 @@ const schema = z.object({
     .trim()
     .min(8, "Numero troppo corto")
     .max(25, "Numero troppo lungo")
-    .regex(PHONE_RE, "Numero non valido"),
+    .regex(PHONE_RE, "Numero non valido")
+    .refine((val) => {
+      const parsed = parsePhoneNumberFromString(val, "IT");
+      return !!parsed && parsed.isValid();
+    }, "Inserisci un numero di telefono reale e valido"),
   consent: z.literal(true, { errorMap: () => ({ message: "Consenso obbligatorio" }) }),
   // Honeypot — must remain empty
   website: z.string().max(0, "Spam rilevato").optional(),
