@@ -168,12 +168,12 @@ Deno.serve(async (req) => {
   const adminPayload = { name: data.name, email: data.email, phone: data.phone };
   const idemBase = `${data.email}-${Date.now()}`;
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"];
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   await Promise.all(
     admins.map((addr) =>
       supabase.functions
         .invoke("send-transactional-email", {
-          headers: { Authorization: `Bearer ${anonKey}` },
+          headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey },
           body: {
             templateName: "new-lead-admin",
             recipientEmail: addr,
