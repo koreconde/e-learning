@@ -118,6 +118,10 @@ export type Database = {
       }
       leads: {
         Row: {
+          call_notes: string | null
+          call_status: Database["public"]["Enums"]["call_outcome"]
+          call_updated_at: string | null
+          call_updated_by: string | null
           completed: boolean
           completed_at: string | null
           consent: boolean
@@ -140,6 +144,10 @@ export type Database = {
           utm_term: string | null
         }
         Insert: {
+          call_notes?: string | null
+          call_status?: Database["public"]["Enums"]["call_outcome"]
+          call_updated_at?: string | null
+          call_updated_by?: string | null
           completed?: boolean
           completed_at?: string | null
           consent?: boolean
@@ -162,6 +170,10 @@ export type Database = {
           utm_term?: string | null
         }
         Update: {
+          call_notes?: string | null
+          call_status?: Database["public"]["Enums"]["call_outcome"]
+          call_updated_at?: string | null
+          call_updated_by?: string | null
           completed?: boolean
           completed_at?: string | null
           consent?: boolean
@@ -270,6 +282,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      call_outcome:
+        | "da_contattare"
+        | "contattato"
+        | "non_risponde"
+        | "richiamare"
+        | "interessato"
+        | "non_interessato"
+        | "iscritto"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -398,6 +418,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      call_outcome: [
+        "da_contattare",
+        "contattato",
+        "non_risponde",
+        "richiamare",
+        "interessato",
+        "non_interessato",
+        "iscritto",
+      ],
     },
   },
 } as const

@@ -5,11 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Download, LogOut, RefreshCw } from "lucide-react";
+import { Download, LogOut, RefreshCw, StickyNote } from "lucide-react";
+
+const OUTCOMES = [
+  { value: "da_contattare", label: "Da contattare", color: "bg-slate-500" },
+  { value: "contattato", label: "Contattato", color: "bg-blue-500" },
+  { value: "non_risponde", label: "Non risponde", color: "bg-amber-500" },
+  { value: "richiamare", label: "Richiamare", color: "bg-orange-500" },
+  { value: "interessato", label: "Interessato", color: "bg-emerald-500" },
+  { value: "non_interessato", label: "Non interessato", color: "bg-rose-500" },
+  { value: "iscritto", label: "Iscritto ✓", color: "bg-green-600" },
+] as const;
+type Outcome = typeof OUTCOMES[number]["value"];
+const outcomeLabel = (v: string) => OUTCOMES.find((o) => o.value === v)?.label ?? v;
+const outcomeColor = (v: string) => OUTCOMES.find((o) => o.value === v)?.color ?? "bg-slate-500";
 
 type Lead = {
   id: string;
@@ -24,6 +44,9 @@ type Lead = {
   utm_campaign: string | null;
   created_at: string;
   completed_at: string | null;
+  call_status: Outcome;
+  call_notes: string | null;
+  call_updated_at: string | null;
 };
 
 export default function AdminLeads() {
@@ -33,6 +56,9 @@ export default function AdminLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
+  const [statusFilter, setStatusFilter] = useState<Outcome | "all">("all");
+  const [editing, setEditing] = useState<Lead | null>(null);
+  const [editNotes, setEditNotes] = useState("");
 
   useEffect(() => {
     document.title = "Admin · Lead";
@@ -61,7 +87,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -75,6 +101,7 @@ export default function AdminLeads() {
     return leads.filter((l) => {
       if (filter === "completed" && !l.completed) return false;
       if (filter === "incomplete" && l.completed) return false;
+      if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
       if (!q) return true;
       const s = q.toLowerCase();
       return (
@@ -83,13 +110,32 @@ export default function AdminLeads() {
         l.phone?.toLowerCase().includes(s)
       );
     });
-  }, [leads, q, filter]);
+  }, [leads, q, filter, statusFilter]);
+
+  const updateOutcome = async (id: string, call_status: Outcome, call_notes?: string | null) => {
+    const patch: any = { call_status, call_updated_at: new Date().toISOString() };
+    if (call_notes !== undefined) patch.call_notes = call_notes;
+    const { error } = await supabase.from("leads").update(patch).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    toast.success("Esito aggiornato");
+  };
+
+  const saveNotes = async () => {
+    if (!editing) return;
+    await updateOutcome(editing.id, editing.call_status, editNotes);
+    setEditing(null);
+  };
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Telefono", "Livello", "Score", "Totale", "Completato", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
+    const headers = ["Nome", "Email", "Telefono", "Livello", "Score", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
     const rows = filtered.map((l) => [
       l.name, l.email, l.phone, l.level ?? "", l.score ?? "", l.total ?? "",
-      l.completed ? "Sì" : "No", l.utm_source ?? "", l.utm_campaign ?? "",
+      l.completed ? "Sì" : "No", outcomeLabel(l.call_status), l.call_notes ?? "",
+      l.utm_source ?? "", l.utm_campaign ?? "",
       new Date(l.created_at).toLocaleString("it-IT"),
       l.completed_at ? new Date(l.completed_at).toLocaleString("it-IT") : "",
     ]);
@@ -172,6 +218,17 @@ export default function AdminLeads() {
               </Button>
             ))}
           </div>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtra per esito" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutti gli esiti</SelectItem>
+              {OUTCOMES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Card>
 
         <Card className="overflow-x-auto">
@@ -183,14 +240,15 @@ export default function AdminLeads() {
                 <TableHead>Telefono</TableHead>
                 <TableHead>Livello</TableHead>
                 <TableHead>Score</TableHead>
-                <TableHead>Sorgente</TableHead>
+                <TableHead>Esito</TableHead>
+                <TableHead>Note</TableHead>
                 <TableHead>Data</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -201,15 +259,41 @@ export default function AdminLeads() {
                     <TableCell>
                       <a href={`mailto:${l.email}`} className="text-primary hover:underline">{l.email}</a>
                     </TableCell>
-                    <TableCell>{l.phone}</TableCell>
+                    <TableCell>
+                      <a href={`tel:${l.phone}`} className="text-primary hover:underline">{l.phone}</a>
+                    </TableCell>
                     <TableCell>
                       {l.level ? <Badge>{l.level}</Badge> : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       {l.score != null ? `${l.score}/${l.total ?? "?"}` : <span className="text-muted-foreground">—</span>}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {l.utm_source ?? "diretto"}
+                    <TableCell>
+                      <Select value={l.call_status} onValueChange={(v) => updateOutcome(l.id, v as Outcome)}>
+                        <SelectTrigger className="w-[170px] h-8">
+                          <span className={`inline-block w-2 h-2 rounded-full mr-2 ${outcomeColor(l.call_status)}`} />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OUTCOMES.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditing(l);
+                          setEditNotes(l.call_notes ?? "");
+                        }}
+                        className="gap-1"
+                      >
+                        <StickyNote className="h-4 w-4" />
+                        {l.call_notes ? <span className="text-xs max-w-[120px] truncate">{l.call_notes}</span> : <span className="text-xs text-muted-foreground">aggiungi</span>}
+                      </Button>
                     </TableCell>
                     <TableCell className="text-sm">
                       {new Date(l.created_at).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
@@ -220,6 +304,24 @@ export default function AdminLeads() {
             </TableBody>
           </Table>
         </Card>
+
+        <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Note · {editing?.name}</DialogTitle>
+            </DialogHeader>
+            <Textarea
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              placeholder="Es. Ha richiamato lunedì, interessato al corso B2..."
+              rows={6}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditing(null)}>Annulla</Button>
+              <Button onClick={saveNotes}>Salva</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
