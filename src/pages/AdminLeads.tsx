@@ -13,10 +13,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Download, LogOut, RefreshCw, StickyNote } from "lucide-react";
+import { Download, LogOut, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 
 const OUTCOMES = [
   { value: "da_contattare", label: "Da contattare", color: "bg-slate-500" },
@@ -59,6 +63,7 @@ export default function AdminLeads() {
   const [statusFilter, setStatusFilter] = useState<Outcome | "all">("all");
   const [editing, setEditing] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState("");
+  const [deleting, setDeleting] = useState<Lead | null>(null);
 
   useEffect(() => {
     document.title = "Admin · Lead";
@@ -128,6 +133,18 @@ export default function AdminLeads() {
     if (!editing) return;
     await updateOutcome(editing.id, editing.call_status, editNotes);
     setEditing(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    const { error } = await supabase.from("leads").delete().eq("id", deleting.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeads((prev) => prev.filter((l) => l.id !== deleting.id));
+    toast.success("Lead eliminato");
+    setDeleting(null);
   };
 
   const exportCSV = () => {
@@ -243,12 +260,13 @@ export default function AdminLeads() {
                 <TableHead>Esito</TableHead>
                 <TableHead>Note</TableHead>
                 <TableHead>Data</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -298,6 +316,17 @@ export default function AdminLeads() {
                     <TableCell className="text-sm">
                       {new Date(l.created_at).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleting(l)}
+                        aria-label="Elimina lead"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -322,6 +351,23 @@ export default function AdminLeads() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminare questo lead?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Stai per eliminare definitivamente <strong>{deleting?.name}</strong> ({deleting?.email}). L'azione non è reversibile.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Elimina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </main>
   );
