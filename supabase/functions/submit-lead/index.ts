@@ -168,10 +168,12 @@ Deno.serve(async (req) => {
   const adminPayload = { name: data.name, email: data.email, phone: data.phone };
   const idemBase = `${data.email}-${Date.now()}`;
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"];
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
   await Promise.all(
     admins.map((addr) =>
       supabase.functions
         .invoke("send-transactional-email", {
+          headers: { Authorization: `Bearer ${anonKey}` },
           body: {
             templateName: "new-lead-admin",
             recipientEmail: addr,
@@ -179,7 +181,11 @@ Deno.serve(async (req) => {
             templateData: adminPayload,
           },
         })
-        .catch((e) => console.error("admin email failed", addr, e)),
+        .then((res) => {
+          if (res.error) console.error("admin email error", addr, res.error);
+          else console.log("admin email queued", addr);
+        })
+        .catch((e) => console.error("admin email exception", addr, e)),
     ),
   );
 
