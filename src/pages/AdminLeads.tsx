@@ -28,6 +28,7 @@ const OUTCOMES = [
   { value: "non_risponde", label: "Non risponde", color: "bg-amber-500" },
   { value: "richiamare", label: "Richiamare", color: "bg-orange-500" },
   { value: "interessato", label: "Interessato", color: "bg-emerald-500" },
+  { value: "meeting_fissato", label: "Meeting fissato 📅", color: "bg-violet-500" },
   { value: "non_interessato", label: "Non interessato", color: "bg-rose-500" },
   { value: "iscritto", label: "Iscritto ✓", color: "bg-green-600" },
 ] as const;
@@ -188,6 +189,14 @@ export default function AdminLeads() {
       return;
     }
     toast.success("Meeting creato. Invito inviato al lead.");
+    // Update local UI: lead status becomes "meeting fissato"
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === scheduling.id
+          ? { ...l, call_status: "meeting_fissato" as Outcome, call_updated_at: new Date().toISOString() }
+          : l,
+      ),
+    );
     setScheduling(null);
   };
 
