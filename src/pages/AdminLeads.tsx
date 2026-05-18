@@ -20,7 +20,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Download, LogOut, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { CalendarPlus, Download, LogOut, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 
 const OUTCOMES = [
   { value: "da_contattare", label: "Da contattare", color: "bg-slate-500" },
@@ -64,6 +64,13 @@ export default function AdminLeads() {
   const [editing, setEditing] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [deleting, setDeleting] = useState<Lead | null>(null);
+  const [scheduling, setScheduling] = useState<Lead | null>(null);
+  const [meetingDate, setMeetingDate] = useState("");
+  const [meetingTime, setMeetingTime] = useState("10:00");
+  const [meetingDuration, setMeetingDuration] = useState(30);
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingNotes, setMeetingNotes] = useState("");
+  const [scheduleSubmitting, setScheduleSubmitting] = useState(false);
 
   useEffect(() => {
     document.title = "Admin · Lead";
@@ -145,6 +152,43 @@ export default function AdminLeads() {
     setLeads((prev) => prev.filter((l) => l.id !== deleting.id));
     toast.success("Lead eliminato");
     setDeleting(null);
+  };
+
+  const openScheduler = (l: Lead) => {
+    setScheduling(l);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setMeetingDate(tomorrow.toISOString().slice(0, 10));
+    setMeetingTime("10:00");
+    setMeetingDuration(30);
+    setMeetingTitle(`Call EnglishInfinity · ${l.name}`);
+    setMeetingNotes("");
+  };
+
+  const submitMeeting = async () => {
+    if (!scheduling) return;
+    if (!meetingDate || !meetingTime) {
+      toast.error("Seleziona data e orario");
+      return;
+    }
+    setScheduleSubmitting(true);
+    const startISO = new Date(`${meetingDate}T${meetingTime}:00`).toISOString();
+    const { data, error } = await supabase.functions.invoke("schedule-meeting", {
+      body: {
+        leadId: scheduling.id,
+        startISO,
+        durationMinutes: meetingDuration,
+        title: meetingTitle,
+        description: meetingNotes,
+      },
+    });
+    setScheduleSubmitting(false);
+    if (error || !data?.success) {
+      toast.error((data?.error as string) || error?.message || "Errore nella creazione del meeting");
+      return;
+    }
+    toast.success("Meeting creato. Invito inviato al lead.");
+    setScheduling(null);
   };
 
   const exportCSV = () => {
@@ -320,6 +364,16 @@ export default function AdminLeads() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => openScheduler(l)}
+                        aria-label="Fissa meeting"
+                        title="Fissa meeting Google Calendar"
+                      >
+                        <CalendarPlus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => setDeleting(l)}
                         aria-label="Elimina lead"
@@ -368,6 +422,59 @@ export default function AdminLeads() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={!!scheduling} onOpenChange={(o) => !o && setScheduling(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Fissa meeting · {scheduling?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium">Titolo</label>
+                <Input value={meetingTitle} onChange={(e) => setMeetingTitle(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Data</label>
+                  <Input type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Orario</label>
+                  <Input type="time" value={meetingTime} onChange={(e) => setMeetingTime(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Durata</label>
+                <Select value={String(meetingDuration)} onValueChange={(v) => setMeetingDuration(Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[15, 30, 45, 60, 90].map((m) => (
+                      <SelectItem key={m} value={String(m)}>{m} minuti</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Note / agenda (opzionale)</label>
+                <Textarea
+                  value={meetingNotes}
+                  onChange={(e) => setMeetingNotes(e.target.value)}
+                  placeholder="Argomenti, link, contesto…"
+                  rows={3}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Verrà creato un evento Google Calendar con link Meet e l'invito sarà inviato automaticamente a <strong>{scheduling?.email}</strong>.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setScheduling(null)} disabled={scheduleSubmitting}>Annulla</Button>
+              <Button onClick={submitMeeting} disabled={scheduleSubmitting}>
+                {scheduleSubmitting ? "Creazione…" : "Crea meeting"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
