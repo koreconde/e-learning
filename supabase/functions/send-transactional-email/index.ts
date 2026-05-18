@@ -55,7 +55,13 @@ Deno.serve(async (req) => {
   }
 
   const internalSecret = req.headers.get('x-internal-email-secret')
-  if (internalSecret !== supabaseServiceKey) {
+  const authorizationSecret = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  const apiKeySecret = req.headers.get('apikey')
+  const isAuthorized = [internalSecret, authorizationSecret, apiKeySecret].some(
+    (secret) => secret === supabaseServiceKey
+  )
+
+  if (!isAuthorized) {
     console.warn('Unauthorized email send attempt')
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
