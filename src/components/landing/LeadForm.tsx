@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -106,6 +106,15 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
           <div className="mt-8 flex items-center gap-2 text-sm text-background/60">
             <Lock className="h-4 w-4" />
             I tuoi dati sono protetti e non saranno condivisi con terze parti.
+          </div>
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-accent/40 bg-accent/10 p-4 text-sm text-background/90">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+            <p>
+              <span className="font-semibold">Attenzione:</span> questo è un test
+              di alto livello tecnologico, riservato esclusivamente a chi è
+              realmente interessato a migliorare il proprio inglese. Se non hai
+              intenzione di impegnarti, ti preghiamo di non procedere.
+            </p>
           </div>
         </motion.div>
 
