@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
   const leadToken = crypto.randomUUID();
   const { data: inserted, error } = await supabase
     .from("leads")
-    .insert({
+    .upsert({
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
       utm_term: data.attribution.utm_term ?? null,
       referrer: data.attribution.referrer ?? null,
       landing_url: data.attribution.landing_url ?? null,
-    })
+    }, { onConflict: "email", ignoreDuplicates: false })
     .select("id")
     .single();
 
