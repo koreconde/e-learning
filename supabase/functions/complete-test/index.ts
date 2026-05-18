@@ -94,9 +94,13 @@ Deno.serve(async (req) => {
     errors,
   };
 
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+  const invokeHeaders = { Authorization: `Bearer ${anonKey}` };
+
   // Send result to lead
   supabase.functions
     .invoke("send-transactional-email", {
+      headers: invokeHeaders,
       body: {
         templateName: "test-result-lead",
         recipientEmail: lead.email,
@@ -104,13 +108,17 @@ Deno.serve(async (req) => {
         templateData: emailPayload,
       },
     })
-    .catch((e) => console.error("lead email failed", e));
+    .then((res) => {
+      if (res.error) console.error("lead email error", res.error);
+    })
+    .catch((e) => console.error("lead email exception", e));
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"];
   await Promise.all(
     admins.map((addr) =>
       supabase.functions
         .invoke("send-transactional-email", {
+          headers: invokeHeaders,
           body: {
             templateName: "test-result-admin",
             recipientEmail: addr,
@@ -118,7 +126,10 @@ Deno.serve(async (req) => {
             templateData: emailPayload,
           },
         })
-        .catch((e) => console.error("admin result email failed", addr, e)),
+        .then((res) => {
+          if (res.error) console.error("admin result email error", addr, res.error);
+        })
+        .catch((e) => console.error("admin result email exception", addr, e)),
     ),
   );
 
