@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     })
     .catch((e) => console.error("lead email exception", e));
 
-  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"];
+  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   await Promise.all(
     admins.map((addr) =>
       supabase.functions
