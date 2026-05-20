@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
   // Notify admins (fire-and-forget). Errors logged but don't block.
   const adminPayload = { name: data.name, email: data.email, phone: data.phone };
   const idemBase = `${data.email}-${Date.now()}`;
-  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it"];
+  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   await Promise.all(
     admins.map((addr) =>
