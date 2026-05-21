@@ -467,6 +467,16 @@ export default function AdminLeads() {
                 </Select>
               </div>
               <div>
+                <label className="text-sm font-medium">Calendario</label>
+                <Select value={meetingCalendar} onValueChange={(v) => setMeetingCalendar(v as "raffaele" | "francesca")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="raffaele">Raffaele</SelectItem>
+                    <SelectItem value="francesca">Francesca</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <label className="text-sm font-medium">Note / agenda (opzionale)</label>
                 <Textarea
                   value={meetingNotes}
