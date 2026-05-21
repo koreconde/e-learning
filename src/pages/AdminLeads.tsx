@@ -341,6 +341,8 @@ export default function AdminLeads() {
           </Select>
         </Card>
 
+        {isManager && <SellerReport leads={leads} />}
+
         <Card className="overflow-x-auto">
           <Table>
             <TableHeader>
