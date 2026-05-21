@@ -171,7 +171,7 @@ export default function AdminLeads() {
         navigate("/admin/auth", { replace: true });
         return;
       }
-      setUserEmail((sess.session.user.email ?? "").toLowerCase());
+      setUserEmail((sess.session.user.email ?? "").trim().toLowerCase());
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -205,7 +205,7 @@ export default function AdminLeads() {
     const isManager = (MANAGERS as readonly string[]).includes(userEmail);
     return leads.filter((l) => {
       if (!isManager) {
-        if ((l.assigned_to ?? "").toLowerCase() !== userEmail) return false;
+        if ((l.assigned_to ?? "").trim().toLowerCase() !== userEmail) return false;
       }
       if (filter === "completed" && !l.completed) return false;
       if (filter === "incomplete" && l.completed) return false;
