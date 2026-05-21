@@ -9,6 +9,7 @@ import Unsubscribe from "./pages/Unsubscribe.tsx";
 import AdminAuth from "./pages/AdminAuth.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
 import { CookieBanner } from "./components/CookieBanner";
+import { AdminErrorBoundary } from "./components/AdminErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,14 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/admin/auth" element={<AdminAuth />} />
-          <Route path="/admin" element={<AdminLeads />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminErrorBoundary>
+                <AdminLeads />
+              </AdminErrorBoundary>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
