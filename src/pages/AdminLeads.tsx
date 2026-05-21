@@ -396,7 +396,7 @@ export default function AdminLeads() {
                     <TableCell>
                       {isManager ? (
                         <Select
-                          value={l.assigned_to ?? "__none__"}
+                          value={l.assigned_to && l.assigned_to.length > 0 ? l.assigned_to : "__none__"}
                           onValueChange={(v) => assignLead(l.id, v === "__none__" ? null : v)}
                         >
                           <SelectTrigger className="w-[160px] h-8">
@@ -407,6 +407,13 @@ export default function AdminLeads() {
                             {SELLERS.map((s) => (
                               <SelectItem key={s} value={s}>{s.split("@")[0]}</SelectItem>
                             ))}
+                            {l.assigned_to &&
+                              l.assigned_to.length > 0 &&
+                              !(SELLERS as readonly string[]).includes(l.assigned_to) && (
+                                <SelectItem value={l.assigned_to}>
+                                  {l.assigned_to.split("@")[0]}
+                                </SelectItem>
+                              )}
                           </SelectContent>
                         </Select>
                       ) : (
