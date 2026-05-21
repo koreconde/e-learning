@@ -71,6 +71,7 @@ export default function AdminLeads() {
   const [meetingDuration, setMeetingDuration] = useState(30);
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingNotes, setMeetingNotes] = useState("");
+  const [meetingCalendar, setMeetingCalendar] = useState<"raffaele" | "francesca">("raffaele");
   const [scheduleSubmitting, setScheduleSubmitting] = useState(false);
 
   useEffect(() => {
@@ -164,6 +165,7 @@ export default function AdminLeads() {
     setMeetingDuration(30);
     setMeetingTitle(`Call EnglishInfinity · ${l.name}`);
     setMeetingNotes("");
+    setMeetingCalendar("raffaele");
   };
 
   const submitMeeting = async () => {
@@ -181,6 +183,7 @@ export default function AdminLeads() {
         durationMinutes: meetingDuration,
         title: meetingTitle,
         description: meetingNotes,
+        calendar: meetingCalendar,
       },
     });
     setScheduleSubmitting(false);
