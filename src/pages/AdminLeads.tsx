@@ -28,6 +28,7 @@ const OUTCOMES = [
   { value: "non_risponde", label: "Non risponde", color: "bg-amber-500" },
   { value: "richiamare", label: "Richiamare", color: "bg-orange-500" },
   { value: "interessato", label: "Interessato", color: "bg-emerald-500" },
+  { value: "in_negotiation", label: "In negotiation", color: "bg-cyan-500" },
   { value: "meeting_fissato", label: "Meeting fissato 📅", color: "bg-violet-500" },
   { value: "non_interessato", label: "Non interessato", color: "bg-rose-500" },
   { value: "iscritto", label: "Iscritto ✓", color: "bg-green-600" },
