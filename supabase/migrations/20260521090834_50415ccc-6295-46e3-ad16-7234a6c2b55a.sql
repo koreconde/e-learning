@@ -1,0 +1,1 @@
+ALTER TYPE call_outcome ADD VALUE IF NOT EXISTS 'in_negotiation';
