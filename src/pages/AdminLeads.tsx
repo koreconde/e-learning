@@ -37,6 +37,78 @@ type Outcome = typeof OUTCOMES[number]["value"];
 const outcomeLabel = (v: string) => OUTCOMES.find((o) => o.value === v)?.label ?? v;
 const outcomeColor = (v: string) => OUTCOMES.find((o) => o.value === v)?.color ?? "bg-slate-500";
 
+function SellerReport({ leads }: { leads: Lead[] }) {
+  const rows = useMemo(() => {
+    const sellers = new Map<string, Lead[]>();
+    sellers.set("__none__", []);
+    SELLERS.forEach((s) => sellers.set(s, []));
+    leads.forEach((l) => {
+      const k = l.assigned_to && l.assigned_to.length > 0 ? l.assigned_to : "__none__";
+      if (!sellers.has(k)) sellers.set(k, []);
+      sellers.get(k)!.push(l);
+    });
+    return Array.from(sellers.entries()).map(([seller, ls]) => {
+      const count = (v: Outcome) => ls.filter((l) => l.call_status === v).length;
+      return {
+        seller,
+        total: ls.length,
+        da_contattare: count("da_contattare"),
+        contattato: count("contattato"),
+        non_risponde: count("non_risponde"),
+        richiamare: count("richiamare"),
+        interessato: count("interessato"),
+        in_negotiation: count("in_negotiation"),
+        meeting_fissato: count("meeting_fissato"),
+        non_interessato: count("non_interessato"),
+        iscritto: count("iscritto"),
+      };
+    });
+  }, [leads]);
+
+  const totals = useMemo(() => {
+    const t: any = { total: leads.length };
+    OUTCOMES.forEach((o) => (t[o.value] = leads.filter((l) => l.call_status === o.value).length));
+    return t;
+  }, [leads]);
+
+  return (
+    <Card className="p-4 mb-4 overflow-x-auto">
+      <h2 className="text-lg font-semibold mb-3">Report venditori</h2>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Venditore</TableHead>
+            <TableHead className="text-right">Totale</TableHead>
+            {OUTCOMES.map((o) => (
+              <TableHead key={o.value} className="text-right whitespace-nowrap">{o.label}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow key={r.seller}>
+              <TableCell className="font-medium">
+                {r.seller === "__none__" ? <span className="text-muted-foreground">Non assegnato</span> : r.seller.split("@")[0]}
+              </TableCell>
+              <TableCell className="text-right font-semibold">{r.total}</TableCell>
+              {OUTCOMES.map((o) => (
+                <TableCell key={o.value} className="text-right">{(r as any)[o.value]}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+          <TableRow className="bg-muted/50 font-semibold">
+            <TableCell>Totale</TableCell>
+            <TableCell className="text-right">{totals.total}</TableCell>
+            {OUTCOMES.map((o) => (
+              <TableCell key={o.value} className="text-right">{totals[o.value]}</TableCell>
+            ))}
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
 const SELLERS = [
   "serena@escapecampus.it",
   "manar@escapecampus.it",
