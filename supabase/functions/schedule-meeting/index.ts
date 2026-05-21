@@ -15,7 +15,7 @@ const BodySchema = z.object({
   durationMinutes: z.number().int().min(15).max(240),
   title: z.string().min(2).max(200).optional(),
   description: z.string().max(2000).optional(),
-  calendar: z.enum(["raffaele", "francesca"]).optional().default("raffaele"),
+  calendar: z.enum(["raffaele", "francesca"]).optional().default("francesca"),
 });
 
 function json(body: unknown, status = 200) {
