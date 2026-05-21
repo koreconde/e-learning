@@ -350,6 +350,7 @@ export default function AdminLeads() {
                 <TableHead>Livello</TableHead>
                 <TableHead>Score</TableHead>
                 <TableHead>Esito</TableHead>
+                <TableHead>Assegnato a</TableHead>
                 <TableHead>Note</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead></TableHead>
@@ -358,7 +359,7 @@ export default function AdminLeads() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -390,6 +391,26 @@ export default function AdminLeads() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      {isManager ? (
+                        <Select
+                          value={l.assigned_to ?? "__none__"}
+                          onValueChange={(v) => assignLead(l.id, v === "__none__" ? null : v)}
+                        >
+                          <SelectTrigger className="w-[160px] h-8">
+                            <SelectValue placeholder="Non assegnato" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">Non assegnato</SelectItem>
+                            {SELLERS.map((s) => (
+                              <SelectItem key={s} value={s}>{s.split("@")[0]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-sm">{l.assigned_to ? l.assigned_to.split("@")[0] : <span className="text-muted-foreground">—</span>}</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Button
