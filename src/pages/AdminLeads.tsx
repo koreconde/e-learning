@@ -71,6 +71,7 @@ export default function AdminLeads() {
   const [meetingDuration, setMeetingDuration] = useState(30);
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingNotes, setMeetingNotes] = useState("");
+  const [meetingCalendar, setMeetingCalendar] = useState<"raffaele" | "francesca">("raffaele");
   const [scheduleSubmitting, setScheduleSubmitting] = useState(false);
 
   useEffect(() => {
@@ -164,6 +165,7 @@ export default function AdminLeads() {
     setMeetingDuration(30);
     setMeetingTitle(`Call EnglishInfinity · ${l.name}`);
     setMeetingNotes("");
+    setMeetingCalendar("raffaele");
   };
 
   const submitMeeting = async () => {
@@ -181,6 +183,7 @@ export default function AdminLeads() {
         durationMinutes: meetingDuration,
         title: meetingTitle,
         description: meetingNotes,
+        calendar: meetingCalendar,
       },
     });
     setScheduleSubmitting(false);
@@ -460,6 +463,16 @@ export default function AdminLeads() {
                     {[15, 30, 45, 60, 90].map((m) => (
                       <SelectItem key={m} value={String(m)}>{m} minuti</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Calendario</label>
+                <Select value={meetingCalendar} onValueChange={(v) => setMeetingCalendar(v as "raffaele" | "francesca")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="raffaele">Raffaele</SelectItem>
+                    <SelectItem value="francesca">Francesca</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

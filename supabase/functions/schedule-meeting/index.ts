@@ -15,6 +15,7 @@ const BodySchema = z.object({
   durationMinutes: z.number().int().min(15).max(240),
   title: z.string().min(2).max(200).optional(),
   description: z.string().max(2000).optional(),
+  calendar: z.enum(["raffaele", "francesca"]).optional().default("raffaele"),
 });
 
 function json(body: unknown, status = 200) {
@@ -29,8 +30,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const GOOGLE_CALENDAR_API_KEY = Deno.env.get("GOOGLE_CALENDAR_API_KEY");
-  if (!LOVABLE_API_KEY || !GOOGLE_CALENDAR_API_KEY) {
+  if (!LOVABLE_API_KEY) {
     return json({ error: "Google Calendar non configurato" }, 500);
   }
 
@@ -65,7 +65,15 @@ Deno.serve(async (req) => {
   if (!parsed.success) {
     return json({ error: "Validation failed", details: parsed.error.flatten().fieldErrors }, 400);
   }
-  const { leadId, startISO, durationMinutes, title, description } = parsed.data;
+  const { leadId, startISO, durationMinutes, title, description, calendar } = parsed.data;
+
+  const calendarKey =
+    calendar === "francesca"
+      ? Deno.env.get("GOOGLE_CALENDAR_API_KEY_1")
+      : Deno.env.get("GOOGLE_CALENDAR_API_KEY");
+  if (!calendarKey) {
+    return json({ error: `Calendario ${calendar} non configurato` }, 500);
+  }
 
   const start = new Date(startISO);
   if (Number.isNaN(start.getTime())) return json({ error: "Data non valida" }, 400);
@@ -114,7 +122,7 @@ Deno.serve(async (req) => {
     method: "POST",
     headers: {
       Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": GOOGLE_CALENDAR_API_KEY,
+      "X-Connection-Api-Key": calendarKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(eventBody),
