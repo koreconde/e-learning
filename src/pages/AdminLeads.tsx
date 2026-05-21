@@ -36,6 +36,20 @@ type Outcome = typeof OUTCOMES[number]["value"];
 const outcomeLabel = (v: string) => OUTCOMES.find((o) => o.value === v)?.label ?? v;
 const outcomeColor = (v: string) => OUTCOMES.find((o) => o.value === v)?.color ?? "bg-slate-500";
 
+const SELLERS = [
+  "serena@escapecampus.it",
+  "manar@escapecampus.it",
+  "antonella@escapecampus.it",
+  "cristina@escapecampus.it",
+] as const;
+
+const MANAGERS = [
+  "francesca@escapecampus.it",
+  "raff@escapecampus.it",
+  "giada@escapecampus.it",
+  "info@englishinfinity.io",
+] as const;
+
 type Lead = {
   id: string;
   name: string;
@@ -52,12 +66,14 @@ type Lead = {
   call_status: Outcome;
   call_notes: string | null;
   call_updated_at: string | null;
+  assigned_to: string | null;
 };
 
 export default function AdminLeads() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
@@ -82,6 +98,7 @@ export default function AdminLeads() {
         navigate("/admin/auth", { replace: true });
         return;
       }
+      setUserEmail((sess.session.user.email ?? "").toLowerCase());
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -101,7 +118,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -112,7 +129,11 @@ export default function AdminLeads() {
   };
 
   const filtered = useMemo(() => {
+    const isManager = (MANAGERS as readonly string[]).includes(userEmail);
     return leads.filter((l) => {
+      if (!isManager) {
+        if ((l.assigned_to ?? "").toLowerCase() !== userEmail) return false;
+      }
       if (filter === "completed" && !l.completed) return false;
       if (filter === "incomplete" && l.completed) return false;
       if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
@@ -124,7 +145,22 @@ export default function AdminLeads() {
         l.phone?.toLowerCase().includes(s)
       );
     });
-  }, [leads, q, filter, statusFilter]);
+  }, [leads, q, filter, statusFilter, userEmail]);
+
+  const isManager = (MANAGERS as readonly string[]).includes(userEmail);
+
+  const assignLead = async (id: string, assigned_to: string | null) => {
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, assigned_to } : l)));
+    toast.success(assigned_to ? `Assegnato a ${assigned_to.split("@")[0]}` : "Assegnazione rimossa");
+  };
 
   const updateOutcome = async (id: string, call_status: Outcome, call_notes?: string | null) => {
     const patch: any = { call_status, call_updated_at: new Date().toISOString() };
@@ -314,6 +350,7 @@ export default function AdminLeads() {
                 <TableHead>Livello</TableHead>
                 <TableHead>Score</TableHead>
                 <TableHead>Esito</TableHead>
+                <TableHead>Assegnato a</TableHead>
                 <TableHead>Note</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead></TableHead>
@@ -322,7 +359,7 @@ export default function AdminLeads() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -354,6 +391,26 @@ export default function AdminLeads() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      {isManager ? (
+                        <Select
+                          value={l.assigned_to ?? "__none__"}
+                          onValueChange={(v) => assignLead(l.id, v === "__none__" ? null : v)}
+                        >
+                          <SelectTrigger className="w-[160px] h-8">
+                            <SelectValue placeholder="Non assegnato" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">Non assegnato</SelectItem>
+                            {SELLERS.map((s) => (
+                              <SelectItem key={s} value={s}>{s.split("@")[0]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-sm">{l.assigned_to ? l.assigned_to.split("@")[0] : <span className="text-muted-foreground">—</span>}</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Button

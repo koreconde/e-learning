@@ -118,6 +118,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          assigned_to: string | null
           call_notes: string | null
           call_status: Database["public"]["Enums"]["call_outcome"]
           call_updated_at: string | null
@@ -144,6 +145,7 @@ export type Database = {
           utm_term: string | null
         }
         Insert: {
+          assigned_to?: string | null
           call_notes?: string | null
           call_status?: Database["public"]["Enums"]["call_outcome"]
           call_updated_at?: string | null
@@ -170,6 +172,7 @@ export type Database = {
           utm_term?: string | null
         }
         Update: {
+          assigned_to?: string | null
           call_notes?: string | null
           call_status?: Database["public"]["Enums"]["call_outcome"]
           call_updated_at?: string | null
