@@ -129,7 +129,11 @@ export default function AdminLeads() {
   };
 
   const filtered = useMemo(() => {
+    const isManager = (MANAGERS as readonly string[]).includes(userEmail);
     return leads.filter((l) => {
+      if (!isManager) {
+        if ((l.assigned_to ?? "").toLowerCase() !== userEmail) return false;
+      }
       if (filter === "completed" && !l.completed) return false;
       if (filter === "incomplete" && l.completed) return false;
       if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
@@ -141,7 +145,22 @@ export default function AdminLeads() {
         l.phone?.toLowerCase().includes(s)
       );
     });
-  }, [leads, q, filter, statusFilter]);
+  }, [leads, q, filter, statusFilter, userEmail]);
+
+  const isManager = (MANAGERS as readonly string[]).includes(userEmail);
+
+  const assignLead = async (id: string, assigned_to: string | null) => {
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, assigned_to } : l)));
+    toast.success(assigned_to ? `Assegnato a ${assigned_to.split("@")[0]}` : "Assegnazione rimossa");
+  };
 
   const updateOutcome = async (id: string, call_status: Outcome, call_notes?: string | null) => {
     const patch: any = { call_status, call_updated_at: new Date().toISOString() };
