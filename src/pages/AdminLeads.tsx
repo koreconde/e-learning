@@ -36,6 +36,20 @@ type Outcome = typeof OUTCOMES[number]["value"];
 const outcomeLabel = (v: string) => OUTCOMES.find((o) => o.value === v)?.label ?? v;
 const outcomeColor = (v: string) => OUTCOMES.find((o) => o.value === v)?.color ?? "bg-slate-500";
 
+const SELLERS = [
+  "serena@escapecampus.it",
+  "manar@escapecampus.it",
+  "antonella@escapecampus.it",
+  "cristina@escapecampus.it",
+] as const;
+
+const MANAGERS = [
+  "francesca@escapecampus.it",
+  "raff@escapecampus.it",
+  "giada@escapecampus.it",
+  "info@englishinfinity.io",
+] as const;
+
 type Lead = {
   id: string;
   name: string;
@@ -52,12 +66,14 @@ type Lead = {
   call_status: Outcome;
   call_notes: string | null;
   call_updated_at: string | null;
+  assigned_to: string | null;
 };
 
 export default function AdminLeads() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
@@ -82,6 +98,7 @@ export default function AdminLeads() {
         navigate("/admin/auth", { replace: true });
         return;
       }
+      setUserEmail((sess.session.user.email ?? "").toLowerCase());
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -101,7 +118,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
