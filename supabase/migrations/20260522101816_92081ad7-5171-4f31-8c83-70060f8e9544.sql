@@ -1,0 +1,1 @@
+ALTER TYPE public.call_outcome ADD VALUE IF NOT EXISTS 'wrong_number';
