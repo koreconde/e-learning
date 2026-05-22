@@ -525,9 +525,9 @@ export const SpeakingView = ({
           <button
             type="button"
             onClick={() => setShowTextFallback(true)}
-            className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-full border-2 border-border bg-card px-5 text-xs font-bold uppercase tracking-wide text-foreground hover:bg-muted"
           >
-            Il microfono non funziona? Scrivi la risposta
+            ⌨️ Scrivi la risposta invece
           </button>
           {transcript && (
             <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
