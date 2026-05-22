@@ -57,6 +57,7 @@ function SellerReport({ leads }: { leads: Lead[] }) {
         contattato: count("contattato"),
         non_risponde: count("non_risponde"),
         richiamare: count("richiamare"),
+        wrong_number: count("wrong_number"),
         interessato: count("interessato"),
         in_negotiation: count("in_negotiation"),
         meeting_fissato: count("meeting_fissato"),
