@@ -345,6 +345,8 @@ export const SpeakingView = ({
   const [recogError, setRecogError] = useState<string | null>(null);
   const [showTextFallback, setShowTextFallback] = useState(false);
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gotResultRef = useRef(false);
 
   // Detect in-app browsers (Instagram, Facebook, TikTok, LinkedIn) where
   // the Web Speech API is unreliable even when the constructor exists.
@@ -370,6 +372,7 @@ export const SpeakingView = ({
     recog.continuous = false;
     recog.onresult = (e) => {
       const text = e.results[0]?.[0]?.transcript ?? "";
+      gotResultRef.current = true;
       onChange(text);
     };
     recog.onerror = (e) => {
@@ -380,10 +383,28 @@ export const SpeakingView = ({
       if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
         setShowTextFallback(true);
       }
+      if (code === "no-speech") {
+        // Non ha sentito nulla: mostriamo subito il fallback testo
+        setShowTextFallback(true);
+      }
     };
-    recog.onend = () => setRecording(false);
+    recog.onend = () => {
+      setRecording(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // Se finisce senza risultati né errore (tipico bug iOS Safari),
+      // offriamo subito il fallback testo.
+      if (!gotResultRef.current && !recogError) {
+        setShowTextFallback(true);
+      }
+    };
     recogRef.current = recog;
-    return () => recog.stop();
+    return () => {
+      try { recog.stop(); } catch { /* ignore */ }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.id]);
 
@@ -401,12 +422,23 @@ export const SpeakingView = ({
     if (recording) {
       recogRef.current.stop();
       setRecording(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     } else {
       onChange("");
       setRecogError(null);
+      gotResultRef.current = false;
       try {
         recogRef.current.start();
         setRecording(true);
+        // Safety timeout: dopo 15s fermiamo da soli (iOS a volte non chiama onend)
+        timeoutRef.current = setTimeout(() => {
+          try { recogRef.current?.stop(); } catch { /* ignore */ }
+          setRecording(false);
+          if (!gotResultRef.current) setShowTextFallback(true);
+        }, 15000);
       } catch {
         setRecording(false);
         setRecogError("start-failed");
