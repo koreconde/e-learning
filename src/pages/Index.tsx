@@ -3,6 +3,7 @@ import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Partners } from "@/components/landing/Partners";
 import { LeadForm, type Lead, type LeadSubmitMeta } from "@/components/landing/LeadForm";
 import { Footer } from "@/components/landing/Footer";
 import { TestRunner } from "@/components/test/TestRunner";
@@ -123,6 +124,7 @@ const Index = () => {
       <Hero onStart={scrollToForm} />
       <SocialProof />
       <HowItWorks />
+      <Partners />
       <LeadForm onSubmit={handleLeadSubmit} />
       <Footer />
     </main>
