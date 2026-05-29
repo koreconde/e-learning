@@ -133,5 +133,22 @@ Deno.serve(async (req) => {
     ),
   );
 
+  // Fire-and-forget Mailchimp sync (uses MAILCHIMP_DEFAULT_LIST_ID if set)
+  supabase.functions
+    .invoke("mailchimp-sync-lead", {
+      headers: invokeHeaders,
+      body: {
+        email: lead.email,
+        name: lead.name,
+        phone: lead.phone,
+        level,
+        score,
+        total,
+        completed: true,
+      },
+    })
+    .then((res) => { if (res.error) console.error("mailchimp sync error", res.error); })
+    .catch((e) => console.error("mailchimp sync exception", e));
+
   return jsonResponse({ success: true });
 });
