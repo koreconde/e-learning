@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.whatsapp-webhook]
 verify_jwt = false
+
+[functions.mailchimp-admin]
+verify_jwt = false
+
+[functions.mailchimp-sync-lead]
+verify_jwt = false
