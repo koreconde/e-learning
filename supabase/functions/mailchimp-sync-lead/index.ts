@@ -38,16 +38,8 @@ Deno.serve(async (req) => {
   if (body.utm_source) tags.push(`src:${body.utm_source}`);
 
   // Subscriber hash = md5 lowercase email
-  const enc = new TextEncoder().encode(email);
-  const hashBuf = await crypto.subtle.digest("MD5" as any, enc).catch(() => null as any);
-  let hash: string;
-  if (hashBuf) {
-    hash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-  } else {
-    // Fallback to JS md5
-    const { default: md5 } = await import("https://esm.sh/js-md5@0.8.3");
-    hash = md5(email);
-  }
+  const { default: md5 } = await import("https://esm.sh/js-md5@0.8.3");
+  const hash = md5(email);
 
   const baseUrl = `https://${MC_DC}.api.mailchimp.com/3.0`;
   const headers = {
