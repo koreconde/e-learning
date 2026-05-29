@@ -20,7 +20,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { CalendarPlus, Download, LogOut, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { CalendarPlus, Download, LogOut, Mail, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const OUTCOMES = [
   { value: "da_contattare", label: "Da contattare", color: "bg-slate-500" },
@@ -374,6 +375,11 @@ export default function AdminLeads() {
             <Button variant="outline" size="sm" onClick={loadLeads}>
               <RefreshCw className="h-4 w-4 mr-1" /> Aggiorna
             </Button>
+            <Link to="/admin/campaigns">
+              <Button variant="outline" size="sm">
+                <Mail className="h-4 w-4 mr-1" /> Campagne
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={exportCSV}>
               <Download className="h-4 w-4 mr-1" /> CSV
             </Button>
