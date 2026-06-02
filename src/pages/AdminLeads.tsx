@@ -435,7 +435,7 @@ export default function AdminLeads() {
                 <TableHead>Esito</TableHead>
                 <TableHead>Assegnato a</TableHead>
                 <TableHead>Note</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>Data e ora ingresso</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -516,8 +516,13 @@ export default function AdminLeads() {
                         {l.call_notes ? <span className="text-xs max-w-[120px] truncate">{l.call_notes}</span> : <span className="text-xs text-muted-foreground">aggiungi</span>}
                       </Button>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {new Date(l.created_at).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
+                    <TableCell className="text-sm whitespace-nowrap">
+                      <div className="font-medium">
+                        {new Date(l.created_at).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(l.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button
