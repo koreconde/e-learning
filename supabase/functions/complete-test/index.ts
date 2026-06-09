@@ -18,11 +18,11 @@ const ErrorItemSchema = z.object({
 
 const BodySchema = z.object({
   leadToken: z.string().uuid(),
-  level: z.string().min(1).max(10),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
   score: z.number().int().min(0).max(1000),
   total: z.number().int().min(0).max(1000),
   errors: z.array(ErrorItemSchema).max(500),
-});
+}).refine((d) => d.score <= d.total, { message: "score must be <= total", path: ["score"] });
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
   // Look up lead by token
   const { data: lead, error: lookupError } = await supabase
     .from("leads")
-    .select("id, name, email, phone")
+    .select("id, name, email, phone, completed")
     .eq("lead_token", leadToken)
     .maybeSingle();
 
@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
     console.warn("Lead token not found", { leadToken, lookupError });
     // Silent success — likely a honeypot/spam pseudo-token
     return jsonResponse({ success: true });
+  }
+
+  // Prevent overwriting an already-completed test
+  if (lead.completed) {
+    return jsonResponse({ success: true, alreadyCompleted: true });
   }
 
   const { error: updateError } = await supabase
