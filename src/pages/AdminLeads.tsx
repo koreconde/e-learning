@@ -205,11 +205,7 @@ export default function AdminLeads() {
   };
 
   const filtered = useMemo(() => {
-    const isManager = (MANAGERS as readonly string[]).includes(userEmail);
     return leads.filter((l) => {
-      if (!isManager) {
-        if ((l.assigned_to ?? "").trim().toLowerCase() !== userEmail) return false;
-      }
       if (filter === "completed" && !l.completed) return false;
       if (filter === "incomplete" && l.completed) return false;
       if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
