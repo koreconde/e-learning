@@ -25,6 +25,8 @@ const BodySchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().trim().email().max(120).toLowerCase(),
   phone: z.string().trim().min(8).max(25),
+  goal: z.enum(["lavoro", "studio", "viaggio", "curiosita"]),
+  timeline: z.enum(["subito", "1_3_mesi", "piu_avanti", "non_so"]),
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
   // Honeypot — must be empty
@@ -44,6 +46,45 @@ const BodySchema = z.object({
     .optional()
     .default({}),
 });
+
+// Free email domains (lower intent for B2B/professional training)
+const FREE_EMAIL_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "yahoo.com", "yahoo.it", "ymail.com",
+  "hotmail.com", "hotmail.it", "outlook.com", "outlook.it", "live.com", "live.it", "msn.com",
+  "libero.it", "alice.it", "tin.it", "tiscali.it", "virgilio.it", "fastwebnet.it",
+  "icloud.com", "me.com", "mac.com", "aol.com", "protonmail.com", "proton.me", "gmx.com", "gmx.it",
+]);
+
+function scoreLead(input: {
+  goal: string;
+  timeline: string;
+  email: string;
+  elapsedMs: number;
+  utm_source: string | null;
+  utm_medium: string | null;
+}): { score: number; quality: "hot" | "warm" | "cold" } {
+  let s = 0;
+  // Goal
+  s += input.goal === "lavoro" ? 30 : input.goal === "studio" ? 25 : input.goal === "viaggio" ? 12 : 5;
+  // Timeline
+  s += input.timeline === "subito" ? 35 : input.timeline === "1_3_mesi" ? 25 : input.timeline === "piu_avanti" ? 10 : 5;
+  // Email type
+  const domain = (input.email.split("@")[1] ?? "").toLowerCase();
+  s += FREE_EMAIL_DOMAINS.has(domain) ? 5 : 20;
+  // Engagement: time spent on form (sweet spot 8s–5min)
+  if (input.elapsedMs >= 8000 && input.elapsedMs <= 5 * 60 * 1000) s += 10;
+  else if (input.elapsedMs > 2000) s += 5;
+  // Source quality
+  const src = (input.utm_source ?? "").toLowerCase();
+  const med = (input.utm_medium ?? "").toLowerCase();
+  if (!src && !med) s += 5; // direct/organic
+  else if (med.includes("organic") || src.includes("google")) s += 8;
+  else if (med.includes("referral")) s += 6;
+  // cap
+  s = Math.max(0, Math.min(100, s));
+  const quality = s >= 70 ? "hot" : s >= 45 ? "warm" : "cold";
+  return { score: s, quality };
+}
 
 // Strict name: at least 2 words, only letters/spaces/apostrophes/hyphens
 const NAME_RE = /^[A-Za-zÀ-ÖØ-öø-ÿ'’\-]{2,}(?:\s+[A-Za-zÀ-ÖØ-öø-ÿ'’\-]{2,})+$/;
@@ -147,6 +188,14 @@ Deno.serve(async (req) => {
   );
 
   const leadToken = crypto.randomUUID();
+  const scoring = scoreLead({
+    goal: data.goal,
+    timeline: data.timeline,
+    email: data.email,
+    elapsedMs: data.elapsedMs,
+    utm_source: data.attribution.utm_source ?? null,
+    utm_medium: data.attribution.utm_medium ?? null,
+  });
   const { data: inserted, error } = await supabase
     .from("leads")
     .upsert({
@@ -155,6 +204,10 @@ Deno.serve(async (req) => {
       phone: normalizedPhone,
       consent: true,
       lead_token: leadToken,
+      goal: data.goal,
+      timeline: data.timeline,
+      lead_score: scoring.score,
+      lead_quality: scoring.quality,
       utm_source: data.attribution.utm_source ?? null,
       utm_medium: data.attribution.utm_medium ?? null,
       utm_campaign: data.attribution.utm_campaign ?? null,
@@ -172,7 +225,15 @@ Deno.serve(async (req) => {
   }
 
   // Notify admins (fire-and-forget). Errors logged but don't block.
-  const adminPayload = { name: data.name, email: data.email, phone: data.phone };
+  const adminPayload = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    goal: data.goal,
+    timeline: data.timeline,
+    lead_score: scoring.score,
+    lead_quality: scoring.quality,
+  };
   const idemBase = `${data.email}-${Date.now()}`;
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
