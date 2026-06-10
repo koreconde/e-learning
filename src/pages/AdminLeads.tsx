@@ -342,12 +342,13 @@ export default function AdminLeads() {
   };
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
+    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
     const rows = filtered.map((l) => [
       l.name, l.email, l.phone,
       l.lead_quality ?? "", l.lead_score ?? "",
       l.goal ? (GOAL_LABEL[l.goal] ?? l.goal) : "",
       l.timeline ? (TIMELINE_LABEL[l.timeline] ?? l.timeline) : "",
+      l.contact_preference ? (CONTACT_LABEL[l.contact_preference] ?? l.contact_preference) : "",
       l.level ?? "", l.score ?? "", l.total ?? "",
       l.completed ? "Sì" : "No", outcomeLabel(l.call_status), l.call_notes ?? "",
       l.utm_source ?? "", l.utm_campaign ?? "",
