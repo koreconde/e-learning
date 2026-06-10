@@ -44,6 +44,8 @@ const Index = () => {
           name: l.name,
           email: l.email,
           phone: l.phone,
+          goal: l.goal,
+          timeline: l.timeline,
           consent: true,
           turnstileToken: meta.turnstileToken,
           elapsedMs: meta.elapsedMs,
