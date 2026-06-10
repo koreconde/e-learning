@@ -147,6 +147,7 @@ type Lead = {
   timeline: string | null;
   lead_score: number | null;
   lead_quality: "hot" | "warm" | "cold" | null;
+  contact_preference: "subito" | "dopo" | "no" | null;
 };
 
 const GOAL_LABEL: Record<string, string> = {
@@ -160,6 +161,11 @@ const TIMELINE_LABEL: Record<string, string> = {
   "1_3_mesi": "1-3 mesi",
   piu_avanti: "Più avanti",
   non_so: "Non lo so",
+};
+const CONTACT_LABEL: Record<string, string> = {
+  subito: "🔥 Subito",
+  dopo: "✅ Dopo risultato",
+  no: "❌ No",
 };
 const QUALITY_STYLE: Record<string, string> = {
   hot: "bg-red-500 text-white",
@@ -217,7 +223,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality,contact_preference")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -336,12 +342,13 @@ export default function AdminLeads() {
   };
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
+    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
     const rows = filtered.map((l) => [
       l.name, l.email, l.phone,
       l.lead_quality ?? "", l.lead_score ?? "",
       l.goal ? (GOAL_LABEL[l.goal] ?? l.goal) : "",
       l.timeline ? (TIMELINE_LABEL[l.timeline] ?? l.timeline) : "",
+      l.contact_preference ? (CONTACT_LABEL[l.contact_preference] ?? l.contact_preference) : "",
       l.level ?? "", l.score ?? "", l.total ?? "",
       l.completed ? "Sì" : "No", outcomeLabel(l.call_status), l.call_notes ?? "",
       l.utm_source ?? "", l.utm_campaign ?? "",
@@ -468,6 +475,7 @@ export default function AdminLeads() {
                 <TableHead>Qualità</TableHead>
                 <TableHead>Obiettivo</TableHead>
                 <TableHead>Tempistica</TableHead>
+                <TableHead>Contatto</TableHead>
                 <TableHead>Livello</TableHead>
                 <TableHead>Score</TableHead>
                 <TableHead>Esito</TableHead>
@@ -480,7 +488,7 @@ export default function AdminLeads() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -509,6 +517,9 @@ export default function AdminLeads() {
                     </TableCell>
                     <TableCell className="text-sm">
                       {l.timeline ? TIMELINE_LABEL[l.timeline] ?? l.timeline : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">
+                      {l.contact_preference ? CONTACT_LABEL[l.contact_preference] ?? l.contact_preference : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       {l.level ? <Badge>{l.level}</Badge> : <span className="text-muted-foreground">—</span>}

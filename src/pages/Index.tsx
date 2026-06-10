@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Partners } from "@/components/landing/Partners";
 import { LeadForm, type Lead, type LeadSubmitMeta } from "@/components/landing/LeadForm";
 import { Footer } from "@/components/landing/Footer";
+import { ContactGate, type ContactChoice } from "@/components/landing/ContactGate";
 import { TestRunner } from "@/components/test/TestRunner";
 import type { AnsweredQuestion } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
@@ -14,13 +15,14 @@ import { fbqTrack, ttqTrack } from "@/lib/fpixel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-type Stage = "landing" | "test" | "result";
+type Stage = "landing" | "contact" | "test" | "result";
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>("landing");
   const [lead, setLead] = useState<Lead | null>(null);
   const leadTokenRef = useRef<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
 
   const scrollToForm = () => {
     document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -72,6 +74,24 @@ const Index = () => {
     ttqTrack("SubmitForm", { content_name: "English Test Lead" });
     ttqTrack("CompleteRegistration", { content_name: "Test inglese - Lead acquisito" });
 
+    setStage("contact");
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  };
+
+  const handleContactChoice = async (choice: ContactChoice) => {
+    if (contactSubmitting) return;
+    setContactSubmitting(true);
+    // Fire-and-forget save; UX should never block the user from the test
+    if (leadTokenRef.current) {
+      supabase.functions
+        .invoke("set-contact-preference", {
+          body: {
+            leadToken: leadTokenRef.current,
+            contactPreference: choice,
+          },
+        })
+        .catch((e) => console.error("set-contact-preference failed", e));
+    }
     setStage("test");
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
@@ -117,6 +137,8 @@ const Index = () => {
   }, [stage]);
 
   if (stage === "test") return <TestRunner onFinish={handleTestFinish} />;
+  if (stage === "contact" && lead)
+    return <ContactGate name={lead.name} onChoose={handleContactChoice} submitting={contactSubmitting} />;
   if (stage === "result" && result && lead)
     return <ResultPage result={result} name={lead.name} email={lead.email} />;
 
