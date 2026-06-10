@@ -129,14 +129,18 @@ export type Database = {
           created_at: string
           email: string
           errors: Json | null
+          goal: string | null
           id: string
           landing_url: string | null
+          lead_quality: string | null
+          lead_score: number | null
           lead_token: string | null
           level: string | null
           name: string
           phone: string
           referrer: string | null
           score: number | null
+          timeline: string | null
           total: number | null
           utm_campaign: string | null
           utm_content: string | null
@@ -156,14 +160,18 @@ export type Database = {
           created_at?: string
           email: string
           errors?: Json | null
+          goal?: string | null
           id?: string
           landing_url?: string | null
+          lead_quality?: string | null
+          lead_score?: number | null
           lead_token?: string | null
           level?: string | null
           name: string
           phone: string
           referrer?: string | null
           score?: number | null
+          timeline?: string | null
           total?: number | null
           utm_campaign?: string | null
           utm_content?: string | null
@@ -183,14 +191,18 @@ export type Database = {
           created_at?: string
           email?: string
           errors?: Json | null
+          goal?: string | null
           id?: string
           landing_url?: string | null
+          lead_quality?: string | null
+          lead_score?: number | null
           lead_token?: string | null
           level?: string | null
           name?: string
           phone?: string
           referrer?: string | null
           score?: number | null
+          timeline?: string | null
           total?: number | null
           utm_campaign?: string | null
           utm_content?: string | null
