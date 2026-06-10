@@ -7,6 +7,13 @@ import { ArrowRight, Lock, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
@@ -14,11 +21,16 @@ export interface Lead {
   name: string;
   email: string;
   phone: string;
+  goal: string;
+  timeline: string;
 }
 
 // Strict name: at least 2 words, only letters/spaces/apostrophes/hyphens
 const NAME_RE = /^[A-Za-zÀ-ÖØ-öø-ÿ'’\-]{2,}(?:\s+[A-Za-zÀ-ÖØ-öø-ÿ'’\-]{2,})+$/;
 const PHONE_RE = /^\+?[0-9 ()\-.]{8,25}$/;
+
+const GOALS = ["lavoro", "studio", "viaggio", "curiosita"] as const;
+const TIMELINES = ["subito", "1_3_mesi", "piu_avanti", "non_so"] as const;
 
 const schema = z.object({
   name: z
@@ -38,6 +50,8 @@ const schema = z.object({
       const parsed = parsePhoneNumberFromString(val, "IT");
       return !!parsed && parsed.isValid();
     }, "Inserisci un numero di telefono reale e valido"),
+  goal: z.enum(GOALS, { errorMap: () => ({ message: "Seleziona un obiettivo" }) }),
+  timeline: z.enum(TIMELINES, { errorMap: () => ({ message: "Seleziona una tempistica" }) }),
   consent: z.literal(true, { errorMap: () => ({ message: "Consenso obbligatorio" }) }),
   // Honeypot — must remain empty
   website: z.string().max(0, "Spam rilevato").optional(),
@@ -72,10 +86,20 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "+39 ", consent: false as unknown as true, website: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "+39 ",
+      goal: undefined as unknown as (typeof GOALS)[number],
+      timeline: undefined as unknown as (typeof TIMELINES)[number],
+      consent: false as unknown as true,
+      website: "",
+    },
   });
 
   const consentChecked = watch("consent");
+  const goalValue = watch("goal");
+  const timelineValue = watch("timeline");
 
   const submit = handleSubmit(async (data) => {
     if (!turnstileToken) {
@@ -84,7 +108,7 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
     }
     const elapsedMs = Date.now() - mountedAtRef.current;
     await onSubmit(
-      { name: data.name, email: data.email, phone: data.phone },
+      { name: data.name, email: data.email, phone: data.phone, goal: data.goal, timeline: data.timeline },
       { turnstileToken, elapsedMs, honeypot: data.website ?? "" },
     );
   });
@@ -103,10 +127,11 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
             Ultimo passo
           </div>
           <h2 className="font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] md:text-6xl">
-            Pronto a scoprire il tuo livello?
+            Analisi linguistica personalizzata + consulenza gratuita
           </h2>
           <p className="mt-5 max-w-md text-background/70">
-            Inserisci i tuoi dati per accedere al test. Riceverai il risultato dettagliato via email, insieme a un'analisi personalizzata del tuo livello CEFR.
+            Compila il modulo per accedere al test. Al termine riceverai il risultato CEFR via email
+            e un nostro docente ti ricontatterà per una consulenza gratuita di 15 minuti, costruita sul tuo obiettivo.
           </p>
           <div className="mt-8 flex items-center gap-2 text-sm text-background/60">
             <Lock className="h-4 w-4" />
@@ -147,6 +172,44 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
               <Label htmlFor="phone">Numero di telefono</Label>
               <Input id="phone" type="tel" placeholder="+39 333 1234567" className="mt-1.5 h-12 rounded-xl" {...register("phone")} />
               {errors.phone && <p className="mt-1 text-sm text-destructive">{errors.phone.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="goal">Perché vuoi migliorare l'inglese?</Label>
+              <Select
+                value={goalValue}
+                onValueChange={(v) => setValue("goal", v as (typeof GOALS)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="goal" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona un obiettivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lavoro">Per lavoro / carriera</SelectItem>
+                  <SelectItem value="studio">Per studio / certificazione</SelectItem>
+                  <SelectItem value="viaggio">Per viaggio / trasferimento</SelectItem>
+                  <SelectItem value="curiosita">Curiosità personale</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.goal && <p className="mt-1 text-sm text-destructive">{errors.goal.message as string}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="timeline">Quando vorresti iniziare un percorso?</Label>
+              <Select
+                value={timelineValue}
+                onValueChange={(v) => setValue("timeline", v as (typeof TIMELINES)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="timeline" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona una tempistica" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="subito">Subito</SelectItem>
+                  <SelectItem value="1_3_mesi">Entro 1-3 mesi</SelectItem>
+                  <SelectItem value="piu_avanti">Più avanti nel tempo</SelectItem>
+                  <SelectItem value="non_so">Non lo so ancora</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.timeline && <p className="mt-1 text-sm text-destructive">{errors.timeline.message as string}</p>}
             </div>
 
             {/* Honeypot — invisible to humans, visible to bots */}
