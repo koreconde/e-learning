@@ -126,6 +126,7 @@ export type Database = {
           completed: boolean
           completed_at: string | null
           consent: boolean
+          contact_preference: string | null
           created_at: string
           email: string
           errors: Json | null
@@ -157,6 +158,7 @@ export type Database = {
           completed?: boolean
           completed_at?: string | null
           consent?: boolean
+          contact_preference?: string | null
           created_at?: string
           email: string
           errors?: Json | null
@@ -188,6 +190,7 @@ export type Database = {
           completed?: boolean
           completed_at?: string | null
           consent?: boolean
+          contact_preference?: string | null
           created_at?: string
           email?: string
           errors?: Json | null
