@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Volume2, Mic, Square, RotateCcw } from "lucide-react";
+import { Volume2, Mic, Square, RotateCcw, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   MultipleChoiceQ,
   FillBlankQ,
