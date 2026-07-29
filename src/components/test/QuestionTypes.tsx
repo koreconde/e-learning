@@ -445,6 +445,18 @@ export const SpeakingView = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gotResultRef = useRef(false);
 
+  // Fallback universale: registrazione audio + trascrizione lato server
+  const [recorderActive, setRecorderActive] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [recorderError, setRecorderError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const recorderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canRecord =
+    typeof window !== "undefined" &&
+    typeof MediaRecorder !== "undefined" &&
+    !!navigator.mediaDevices?.getUserMedia;
+
   // Detect in-app browsers (Instagram, Facebook, TikTok, LinkedIn) where
   // the Web Speech API is unreliable even when the constructor exists.
   const isInAppBrowser =
@@ -547,6 +559,81 @@ export const SpeakingView = ({
   };
 
   const useTextFallback = !supported || showTextFallback;
+  const useRecorder = !supported && !showTextFallback && canRecord && !isInAppBrowser;
+
+  const blobToBase64 = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read-failed"));
+      reader.onloadend = () => {
+        const result = String(reader.result ?? "");
+        resolve(result.split(",")[1] ?? "");
+      };
+      reader.readAsDataURL(blob);
+    });
+
+  const stopRecorder = () => {
+    try {
+      mediaRecorderRef.current?.stop();
+    } catch { /* ignore */ }
+    if (recorderTimeoutRef.current) {
+      clearTimeout(recorderTimeoutRef.current);
+      recorderTimeoutRef.current = null;
+    }
+    setRecorderActive(false);
+  };
+
+  const startRecorder = async () => {
+    setRecorderError(null);
+    onChange("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferred = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"];
+      const mimeType = preferred.find((t) => MediaRecorder.isTypeSupported?.(t));
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const type = rec.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type });
+        chunksRef.current = [];
+        if (blob.size < 1000) {
+          setRecorderError("Non ho sentito nulla, riprova o scrivi la risposta.");
+          return;
+        }
+        setTranscribing(true);
+        try {
+          const audio = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+            body: { audio, mimeType: type },
+          });
+          if (error) throw error;
+          const text = (data as { text?: string })?.text?.trim() ?? "";
+          if (!text) {
+            setRecorderError("Non sono riuscito a capire, riprova o scrivi la risposta.");
+          } else {
+            onChange(text);
+          }
+        } catch (err) {
+          console.error("transcribe error", err);
+          setRecorderError("Trascrizione non riuscita. Puoi scrivere la risposta.");
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setRecorderActive(true);
+      recorderTimeoutRef.current = setTimeout(() => stopRecorder(), 15000);
+    } catch (err) {
+      console.error("mic error", err);
+      setRecorderError("Microfono non disponibile. Scrivi la risposta qui sotto.");
+      setShowTextFallback(true);
+    }
+  };
 
   return (
     <>
