@@ -656,7 +656,61 @@ export const SpeakingView = ({
         </p>
       </div>
 
-      {useTextFallback ? (
+      {useRecorder ? (
+        <div className="mt-6">
+          <motion.button
+            onClick={() => (recorderActive ? stopRecorder() : startRecorder())}
+            disabled={locked || transcribing}
+            animate={recorderActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+            transition={{ duration: 1, repeat: recorderActive ? Infinity : 0 }}
+            className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl transition disabled:opacity-50 ${
+              recorderActive ? "bg-destructive" : "bg-foreground hover:opacity-90"
+            }`}
+          >
+            {transcribing ? (
+              <Loader2 className="h-7 w-7 animate-spin" />
+            ) : recorderActive ? (
+              <Square className="h-7 w-7" />
+            ) : (
+              <Mic className="h-8 w-8" />
+            )}
+          </motion.button>
+          <p className="mt-3 text-sm font-medium text-muted-foreground">
+            {transcribing
+              ? "Sto trascrivendo..."
+              : recorderActive
+                ? "Sto registrando... parla ora, poi tocca stop"
+                : "Tocca per registrare"}
+          </p>
+          {recorderError && (
+            <p className="mt-2 text-sm font-medium text-destructive">{recorderError}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowTextFallback(true)}
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-full border-2 border-border bg-card px-5 text-xs font-bold uppercase tracking-wide text-foreground hover:bg-muted"
+          >
+            ⌨️ Scrivi la risposta invece
+          </button>
+          {transcript && (
+            <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Hai detto:
+              </div>
+              <div className="mt-1 text-base text-foreground">"{transcript}"</div>
+            </div>
+          )}
+          {transcript && !recorderActive && !transcribing && (
+            <button
+              onClick={onSubmit}
+              disabled={locked}
+              className="mt-4 inline-flex h-12 items-center justify-center rounded-full bg-foreground px-8 text-sm font-bold uppercase tracking-wide text-background transition hover:opacity-90 disabled:opacity-40"
+            >
+              Conferma →
+            </button>
+          )}
+        </div>
+      ) : useTextFallback ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
           {isInAppBrowser ? (
             <>
