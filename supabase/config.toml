@@ -29,3 +29,5 @@ verify_jwt = false
 
 [functions.mailchimp-sync-lead]
 verify_jwt = false
+[functions.transcribe-audio]
+verify_jwt = false
