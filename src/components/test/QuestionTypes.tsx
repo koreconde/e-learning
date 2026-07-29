@@ -45,21 +45,97 @@ export const ListeningView = ({
   locked: boolean;
 }) => {
   const [played, setPlayed] = useState(0);
+  const [speaking, setSpeaking] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [showText, setShowText] = useState(false);
+  const supported =
+    typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+
+  const pickVoice = (lang: string) => {
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const base = lang.split("-")[0].toLowerCase();
+      return (
+        voices.find((v) => v.lang?.toLowerCase() === lang.toLowerCase()) ||
+        voices.find((v) => v.lang?.toLowerCase().startsWith(base)) ||
+        null
+      );
+    } catch {
+      return null;
+    }
+  };
+
   const speak = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(q.audioText);
-    u.lang = q.lang ?? "en-US";
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
-    setPlayed((p) => p + 1);
+    if (!supported) {
+      setFailed(true);
+      setShowText(true);
+      return;
+    }
+    try {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      // iOS/Safari: synth can get stuck in a paused state
+      try {
+        synth.resume();
+      } catch { /* noop */ }
+
+      const lang = q.lang ?? "en-US";
+      const u = new SpeechSynthesisUtterance(q.audioText);
+      u.lang = lang;
+      u.rate = 0.95;
+      const v = pickVoice(lang);
+      if (v) u.voice = v;
+
+      let started = false;
+      u.onstart = () => {
+        started = true;
+        setSpeaking(true);
+        setFailed(false);
+      };
+      u.onend = () => setSpeaking(false);
+      u.onerror = () => {
+        setSpeaking(false);
+        setFailed(true);
+        setShowText(true);
+      };
+
+      setSpeaking(true);
+      synth.speak(u);
+      setPlayed((p) => p + 1);
+
+      // If nothing starts within 2.5s the engine is unavailable (common on iOS)
+      window.setTimeout(() => {
+        if (!started) {
+          setSpeaking(false);
+          setFailed(true);
+          setShowText(true);
+        }
+      }, 2500);
+    } catch {
+      setSpeaking(false);
+      setFailed(true);
+      setShowText(true);
+    }
   };
 
   useEffect(() => {
-    // auto-play once on mount
-    const t = setTimeout(speak, 400);
+    setPlayed(0);
+    setSpeaking(false);
+    setFailed(false);
+    setShowText(false);
+    if (!supported) {
+      setFailed(true);
+      setShowText(true);
+      return;
+    }
+    // Preload voices (Chrome loads them async)
+    try {
+      window.speechSynthesis.getVoices();
+    } catch { /* noop */ }
+    // auto-play attempt (blocked without gesture on some mobile browsers)
+    const t = window.setTimeout(speak, 500);
     return () => {
-      clearTimeout(t);
+      window.clearTimeout(t);
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -81,10 +157,30 @@ export const ListeningView = ({
           <Volume2 className="h-6 w-6" />
         </button>
         <div className="text-sm text-muted-foreground">
-          <div className="font-semibold text-foreground">Ascolta l'audio</div>
-          <div>Riproduzioni: {played} • Puoi riascoltare</div>
+          <div className="font-semibold text-foreground">
+            {speaking ? "Riproduzione in corso…" : "Ascolta l'audio"}
+          </div>
+          <div>
+            {failed
+              ? "Audio non disponibile su questo dispositivo — leggi il testo qui sotto."
+              : `Riproduzioni: ${played} • Tocca per riascoltare`}
+          </div>
         </div>
       </div>
+      {!showText && (
+        <button
+          type="button"
+          onClick={() => setShowText(true)}
+          className="mt-3 text-sm font-semibold text-brand-blue underline underline-offset-4"
+        >
+          Non senti l'audio? Mostra il testo
+        </button>
+      )}
+      {showText && (
+        <div className="mt-3 rounded-2xl border-2 border-border bg-card p-4 text-base italic text-foreground">
+          “{q.audioText}”
+        </div>
+      )}
       <OptionList options={q.options} selected={selected} onSelect={onSelect} locked={locked} />
     </>
   );
