@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Volume2, Mic, Square, RotateCcw } from "lucide-react";
+import { Volume2, Mic, Square, RotateCcw, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   MultipleChoiceQ,
   FillBlankQ,
@@ -444,6 +445,18 @@ export const SpeakingView = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gotResultRef = useRef(false);
 
+  // Fallback universale: registrazione audio + trascrizione lato server
+  const [recorderActive, setRecorderActive] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [recorderError, setRecorderError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const recorderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canRecord =
+    typeof window !== "undefined" &&
+    typeof MediaRecorder !== "undefined" &&
+    !!navigator.mediaDevices?.getUserMedia;
+
   // Detect in-app browsers (Instagram, Facebook, TikTok, LinkedIn) where
   // the Web Speech API is unreliable even when the constructor exists.
   const isInAppBrowser =
@@ -546,6 +559,81 @@ export const SpeakingView = ({
   };
 
   const useTextFallback = !supported || showTextFallback;
+  const useRecorder = !supported && !showTextFallback && canRecord && !isInAppBrowser;
+
+  const blobToBase64 = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read-failed"));
+      reader.onloadend = () => {
+        const result = String(reader.result ?? "");
+        resolve(result.split(",")[1] ?? "");
+      };
+      reader.readAsDataURL(blob);
+    });
+
+  const stopRecorder = () => {
+    try {
+      mediaRecorderRef.current?.stop();
+    } catch { /* ignore */ }
+    if (recorderTimeoutRef.current) {
+      clearTimeout(recorderTimeoutRef.current);
+      recorderTimeoutRef.current = null;
+    }
+    setRecorderActive(false);
+  };
+
+  const startRecorder = async () => {
+    setRecorderError(null);
+    onChange("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferred = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"];
+      const mimeType = preferred.find((t) => MediaRecorder.isTypeSupported?.(t));
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const type = rec.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type });
+        chunksRef.current = [];
+        if (blob.size < 1000) {
+          setRecorderError("Non ho sentito nulla, riprova o scrivi la risposta.");
+          return;
+        }
+        setTranscribing(true);
+        try {
+          const audio = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+            body: { audio, mimeType: type },
+          });
+          if (error) throw error;
+          const text = (data as { text?: string })?.text?.trim() ?? "";
+          if (!text) {
+            setRecorderError("Non sono riuscito a capire, riprova o scrivi la risposta.");
+          } else {
+            onChange(text);
+          }
+        } catch (err) {
+          console.error("transcribe error", err);
+          setRecorderError("Trascrizione non riuscita. Puoi scrivere la risposta.");
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setRecorderActive(true);
+      recorderTimeoutRef.current = setTimeout(() => stopRecorder(), 15000);
+    } catch (err) {
+      console.error("mic error", err);
+      setRecorderError("Microfono non disponibile. Scrivi la risposta qui sotto.");
+      setShowTextFallback(true);
+    }
+  };
 
   return (
     <>
@@ -568,7 +656,61 @@ export const SpeakingView = ({
         </p>
       </div>
 
-      {useTextFallback ? (
+      {useRecorder ? (
+        <div className="mt-6">
+          <motion.button
+            onClick={() => (recorderActive ? stopRecorder() : startRecorder())}
+            disabled={locked || transcribing}
+            animate={recorderActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+            transition={{ duration: 1, repeat: recorderActive ? Infinity : 0 }}
+            className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl transition disabled:opacity-50 ${
+              recorderActive ? "bg-destructive" : "bg-foreground hover:opacity-90"
+            }`}
+          >
+            {transcribing ? (
+              <Loader2 className="h-7 w-7 animate-spin" />
+            ) : recorderActive ? (
+              <Square className="h-7 w-7" />
+            ) : (
+              <Mic className="h-8 w-8" />
+            )}
+          </motion.button>
+          <p className="mt-3 text-sm font-medium text-muted-foreground">
+            {transcribing
+              ? "Sto trascrivendo..."
+              : recorderActive
+                ? "Sto registrando... parla ora, poi tocca stop"
+                : "Tocca per registrare"}
+          </p>
+          {recorderError && (
+            <p className="mt-2 text-sm font-medium text-destructive">{recorderError}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowTextFallback(true)}
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-full border-2 border-border bg-card px-5 text-xs font-bold uppercase tracking-wide text-foreground hover:bg-muted"
+          >
+            ⌨️ Scrivi la risposta invece
+          </button>
+          {transcript && (
+            <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Hai detto:
+              </div>
+              <div className="mt-1 text-base text-foreground">"{transcript}"</div>
+            </div>
+          )}
+          {transcript && !recorderActive && !transcribing && (
+            <button
+              onClick={onSubmit}
+              disabled={locked}
+              className="mt-4 inline-flex h-12 items-center justify-center rounded-full bg-foreground px-8 text-sm font-bold uppercase tracking-wide text-background transition hover:opacity-90 disabled:opacity-40"
+            >
+              Conferma →
+            </button>
+          )}
+        </div>
+      ) : useTextFallback ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
           {isInAppBrowser ? (
             <>
