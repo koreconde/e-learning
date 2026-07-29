@@ -449,6 +449,8 @@ export const SpeakingView = ({
   const isInAppBrowser =
     typeof navigator !== "undefined" &&
     /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Twitter|Line|TikTok|LinkedInApp/i.test(navigator.userAgent);
+  const isIosChrome =
+    typeof navigator !== "undefined" && /CriOS/i.test(navigator.userAgent);
 
   useEffect(() => {
     setRecogError(null);
@@ -574,6 +576,11 @@ export const SpeakingView = ({
               Per registrare la voce apri il link in <strong>Safari</strong> o{" "}
               <strong>Chrome</strong>. In alternativa scrivi qui sotto la frase che
               avresti pronunciato:
+            </>
+          ) : isIosChrome ? (
+            <>
+              Chrome su iPhone non supporta il riconoscimento vocale dentro il browser.
+              Puoi completare il test scrivendo qui sotto la frase che avresti pronunciato:
             </>
           ) : recogError === "not-allowed" || recogError === "service-not-allowed" ? (
             <>
