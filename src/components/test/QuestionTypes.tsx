@@ -34,6 +34,8 @@ export const MultipleChoiceView = ({
 );
 
 /* ============ LISTENING ============ */
+const ttsCache = new Map<string, string>();
+
 export const ListeningView = ({
   q,
   selected,
@@ -47,72 +49,46 @@ export const ListeningView = ({
 }) => {
   const [played, setPlayed] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [showText, setShowText] = useState(false);
-  const supported =
-    typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const pickVoice = (lang: string) => {
-    try {
-      const voices = window.speechSynthesis.getVoices() || [];
-      const base = lang.split("-")[0].toLowerCase();
-      return (
-        voices.find((v) => v.lang?.toLowerCase() === lang.toLowerCase()) ||
-        voices.find((v) => v.lang?.toLowerCase().startsWith(base)) ||
-        null
-      );
-    } catch {
-      return null;
-    }
+  const getAudioUrl = async (): Promise<string> => {
+    const cached = ttsCache.get(q.id as unknown as string);
+    if (cached) return cached;
+    const { data, error } = await supabase.functions.invoke("text-to-speech", {
+      body: { text: q.audioText, voice: "nova" },
+    });
+    if (error) throw error;
+    const blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: "audio/mpeg" });
+    const url = URL.createObjectURL(blob);
+    ttsCache.set(q.id as unknown as string, url);
+    return url;
   };
 
-  const speak = () => {
-    if (!supported) {
-      setFailed(true);
-      setShowText(true);
-      return;
-    }
+  const speak = async () => {
     try {
-      const synth = window.speechSynthesis;
-      synth.cancel();
-      // iOS/Safari: synth can get stuck in a paused state
-      try {
-        synth.resume();
-      } catch { /* noop */ }
-
-      const lang = q.lang ?? "en-US";
-      const u = new SpeechSynthesisUtterance(q.audioText);
-      u.lang = lang;
-      u.rate = 0.95;
-      const v = pickVoice(lang);
-      if (v) u.voice = v;
-
-      let started = false;
-      u.onstart = () => {
-        started = true;
-        setSpeaking(true);
-        setFailed(false);
-      };
-      u.onend = () => setSpeaking(false);
-      u.onerror = () => {
+      setFailed(false);
+      setLoading(true);
+      const url = await getAudioUrl();
+      setLoading(false);
+      if (!audioRef.current) audioRef.current = new Audio();
+      const audio = audioRef.current;
+      audio.src = url;
+      audio.currentTime = 0;
+      audio.onplay = () => setSpeaking(true);
+      audio.onended = () => setSpeaking(false);
+      audio.onerror = () => {
         setSpeaking(false);
         setFailed(true);
         setShowText(true);
       };
-
-      setSpeaking(true);
-      synth.speak(u);
+      await audio.play();
       setPlayed((p) => p + 1);
-
-      // If nothing starts within 2.5s the engine is unavailable (common on iOS)
-      window.setTimeout(() => {
-        if (!started) {
-          setSpeaking(false);
-          setFailed(true);
-          setShowText(true);
-        }
-      }, 2500);
-    } catch {
+    } catch (e) {
+      console.error("TTS error", e);
+      setLoading(false);
       setSpeaking(false);
       setFailed(true);
       setShowText(true);
@@ -124,21 +100,12 @@ export const ListeningView = ({
     setSpeaking(false);
     setFailed(false);
     setShowText(false);
-    if (!supported) {
-      setFailed(true);
-      setShowText(true);
-      return;
-    }
-    // Preload voices (Chrome loads them async)
-    try {
-      window.speechSynthesis.getVoices();
-    } catch { /* noop */ }
-    // auto-play attempt (blocked without gesture on some mobile browsers)
-    const t = window.setTimeout(speak, 500);
+    const t = window.setTimeout(() => { void speak(); }, 400);
     return () => {
       window.clearTimeout(t);
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,19 +118,20 @@ export const ListeningView = ({
       </h2>
       <div className="mt-6 flex items-center gap-4 rounded-2xl border-2 border-brand-blue/30 bg-brand-blue/5 p-5">
         <button
-          onClick={speak}
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-blue text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+          onClick={() => void speak()}
+          disabled={loading}
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-blue text-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
           aria-label="Riproduci audio"
         >
-          <Volume2 className="h-6 w-6" />
+          {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Volume2 className="h-6 w-6" />}
         </button>
         <div className="text-sm text-muted-foreground">
           <div className="font-semibold text-foreground">
-            {speaking ? "Riproduzione in corso…" : "Ascolta l'audio"}
+            {loading ? "Preparazione audio…" : speaking ? "Riproduzione in corso…" : "Ascolta l'audio"}
           </div>
           <div>
             {failed
-              ? "Audio non disponibile su questo dispositivo — leggi il testo qui sotto."
+              ? "Audio non disponibile — tocca di nuovo o leggi il testo qui sotto."
               : `Riproduzioni: ${played} • Tocca per riascoltare`}
           </div>
         </div>
