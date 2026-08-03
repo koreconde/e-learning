@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
-import { syncLeadToCrm } from "../_shared/crm-sync.ts";
+import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
   // Look up lead by token
   const { data: lead, error: lookupError } = await supabase
     .from("leads")
-    .select("id, name, email, phone, completed")
+    .select("id, name, email, phone, completed, goal, timeline, lead_score, lead_quality, contact_preference, utm_source, utm_medium, utm_campaign, utm_content, utm_term, referrer, landing_url, created_at")
     .eq("lead_token", leadToken)
     .maybeSingle();
 
@@ -103,15 +103,37 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const invokeHeaders = { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey };
 
-  // Aggiorna il CRM esterno con livello e punteggio del test
-  await syncLeadToCrm({
-    nome: lead.name,
-    email: lead.email,
-    telefono: lead.phone,
-    livello: level,
-    test_score: score,
-    completato: true,
-  });
+  // Aggiorna il CRM esterno con TUTTE le informazioni del lead
+  {
+    const attribution = {
+      utm_source: lead.utm_source ?? null,
+      utm_medium: lead.utm_medium ?? null,
+      utm_campaign: lead.utm_campaign ?? null,
+      utm_content: lead.utm_content ?? null,
+      utm_term: lead.utm_term ?? null,
+      referrer: lead.referrer ?? null,
+      landing_url: lead.landing_url ?? null,
+    };
+    const fonte = deriveSource(attribution);
+    await syncLeadToCrm({
+      nome: lead.name,
+      email: lead.email,
+      telefono: lead.phone,
+      obiettivo: lead.goal ?? null,
+      tempistica: lead.timeline ?? null,
+      contatto: lead.contact_preference ?? null,
+      qualita: lead.lead_quality ?? null,
+      score: lead.lead_score ?? null,
+      livello: level,
+      test_score: score,
+      test_total: total,
+      completato: true,
+      fonte,
+      ...attribution,
+      data_ingresso: lead.created_at ?? null,
+      note: `Fonte: ${fonte} | Livello: ${level} | Test: ${score}/${total} | Qualità: ${lead.lead_quality ?? "-"} (${lead.lead_score ?? "-"}/100) | Obiettivo: ${lead.goal ?? "-"} | Tempistica: ${lead.timeline ?? "-"} | Contatto: ${lead.contact_preference ?? "-"}`,
+    });
+  }
 
   // Send result to lead
   supabase.functions
