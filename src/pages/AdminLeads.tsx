@@ -214,6 +214,7 @@ export default function AdminLeads() {
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [statusFilter, setStatusFilter] = useState<Outcome | "all">("all");
   const [qualityFilter, setQualityFilter] = useState<"all" | "hot" | "warm" | "cold">("all");
+  const [sourceFilter, setSourceFilter] = useState<SourceKey | "all">("all");
   const [editing, setEditing] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [deleting, setDeleting] = useState<Lead | null>(null);
@@ -254,7 +255,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality,contact_preference")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,utm_medium,referrer,landing_url,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality,contact_preference")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -270,6 +271,7 @@ export default function AdminLeads() {
       if (filter === "incomplete" && l.completed) return false;
       if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
       if (qualityFilter !== "all" && l.lead_quality !== qualityFilter) return false;
+      if (sourceFilter !== "all" && leadSource(l) !== sourceFilter) return false;
       if (!q) return true;
       const s = q.toLowerCase();
       return (
@@ -278,7 +280,13 @@ export default function AdminLeads() {
         l.phone?.toLowerCase().includes(s)
       );
     });
-  }, [leads, q, filter, statusFilter, qualityFilter, userEmail]);
+  }, [leads, q, filter, statusFilter, qualityFilter, sourceFilter, userEmail]);
+
+  const sourceCounts = useMemo(() => {
+    const c: Record<SourceKey, number> = { facebook: 0, tiktok: 0, google: 0, other: 0, direct: 0 };
+    for (const l of leads) c[leadSource(l)]++;
+    return c;
+  }, [leads]);
 
   const isManager = (MANAGERS as readonly string[]).includes(userEmail);
 
