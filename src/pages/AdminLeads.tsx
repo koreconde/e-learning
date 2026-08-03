@@ -381,9 +381,10 @@ export default function AdminLeads() {
   };
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
+    const headers = ["Nome", "Email", "Telefono", "Fonte", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
     const rows = filtered.map((l) => [
       l.name, l.email, l.phone,
+      SOURCE_META[leadSource(l)].label,
       l.lead_quality ?? "", l.lead_score ?? "",
       l.goal ? (GOAL_LABEL[l.goal] ?? l.goal) : "",
       l.timeline ? (TIMELINE_LABEL[l.timeline] ?? l.timeline) : "",
@@ -500,7 +501,28 @@ export default function AdminLeads() {
               <SelectItem value="cold">❄️ Cold</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sourceFilter} onValueChange={(v) => setSourceFilter(v as SourceKey | "all")}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Fonte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutte le fonti</SelectItem>
+              {(Object.keys(SOURCE_META) as SourceKey[]).map((k) => (
+                <SelectItem key={k} value={k}>
+                  {SOURCE_META[k].label} ({sourceCounts[k]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Card>
+
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(SOURCE_META) as SourceKey[]).map((k) => (
+            <Badge key={k} className={SOURCE_META[k].className}>
+              {SOURCE_META[k].label}: {sourceCounts[k]}
+            </Badge>
+          ))}
+        </div>
 
         {isManager && <SellerReport leads={leads} />}
 
@@ -511,6 +533,7 @@ export default function AdminLeads() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefono</TableHead>
+                <TableHead>Fonte</TableHead>
                 <TableHead>Qualità</TableHead>
                 <TableHead>Obiettivo</TableHead>
                 <TableHead>Tempistica</TableHead>
@@ -527,7 +550,7 @@ export default function AdminLeads() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={15} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -540,6 +563,11 @@ export default function AdminLeads() {
                     </TableCell>
                     <TableCell>
                       <a href={`tel:${l.phone}`} className="text-primary hover:underline">{l.phone}</a>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={SOURCE_META[leadSource(l)].className}>
+                        {SOURCE_META[leadSource(l)].label}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {l.lead_quality ? (
