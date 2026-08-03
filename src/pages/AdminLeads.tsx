@@ -137,6 +137,9 @@ type Lead = {
   completed: boolean;
   utm_source: string | null;
   utm_campaign: string | null;
+  utm_medium: string | null;
+  referrer: string | null;
+  landing_url: string | null;
   created_at: string;
   completed_at: string | null;
   call_status: Outcome;
@@ -173,6 +176,34 @@ const QUALITY_STYLE: Record<string, string> = {
   cold: "bg-slate-400 text-white",
 };
 
+type SourceKey = "facebook" | "tiktok" | "google" | "other" | "direct";
+
+const SOURCE_META: Record<SourceKey, { label: string; className: string }> = {
+  facebook: { label: "📘 Facebook/IG", className: "bg-blue-600 text-white" },
+  tiktok: { label: "🎵 TikTok", className: "bg-slate-900 text-white" },
+  google: { label: "🔍 Google", className: "bg-emerald-600 text-white" },
+  other: { label: "🌐 Altro", className: "bg-violet-600 text-white" },
+  direct: { label: "➡️ Diretto", className: "bg-slate-400 text-white" },
+};
+
+function leadSource(l: {
+  utm_source: string | null;
+  utm_medium: string | null;
+  referrer: string | null;
+  landing_url: string | null;
+}): SourceKey {
+  const hay = [l.utm_source, l.utm_medium, l.referrer, l.landing_url]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (!hay.trim()) return "direct";
+  if (/ttclid|tiktok|tt_?ads|bytedance/.test(hay)) return "tiktok";
+  if (/fbclid|facebook|instagram|\bmeta\b|\bfb\b|\big\b/.test(hay)) return "facebook";
+  if (/gclid|google|youtube/.test(hay)) return "google";
+  if (l.utm_source || l.referrer) return "other";
+  return "direct";
+}
+
 export default function AdminLeads() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -183,6 +214,7 @@ export default function AdminLeads() {
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [statusFilter, setStatusFilter] = useState<Outcome | "all">("all");
   const [qualityFilter, setQualityFilter] = useState<"all" | "hot" | "warm" | "cold">("all");
+  const [sourceFilter, setSourceFilter] = useState<SourceKey | "all">("all");
   const [editing, setEditing] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [deleting, setDeleting] = useState<Lead | null>(null);
@@ -223,7 +255,7 @@ export default function AdminLeads() {
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
-      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality,contact_preference")
+      .select("id,name,email,phone,level,score,total,completed,utm_source,utm_campaign,utm_medium,referrer,landing_url,created_at,completed_at,call_status,call_notes,call_updated_at,assigned_to,goal,timeline,lead_score,lead_quality,contact_preference")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -239,6 +271,7 @@ export default function AdminLeads() {
       if (filter === "incomplete" && l.completed) return false;
       if (statusFilter !== "all" && l.call_status !== statusFilter) return false;
       if (qualityFilter !== "all" && l.lead_quality !== qualityFilter) return false;
+      if (sourceFilter !== "all" && leadSource(l) !== sourceFilter) return false;
       if (!q) return true;
       const s = q.toLowerCase();
       return (
@@ -247,7 +280,13 @@ export default function AdminLeads() {
         l.phone?.toLowerCase().includes(s)
       );
     });
-  }, [leads, q, filter, statusFilter, qualityFilter, userEmail]);
+  }, [leads, q, filter, statusFilter, qualityFilter, sourceFilter, userEmail]);
+
+  const sourceCounts = useMemo(() => {
+    const c: Record<SourceKey, number> = { facebook: 0, tiktok: 0, google: 0, other: 0, direct: 0 };
+    for (const l of leads) c[leadSource(l)]++;
+    return c;
+  }, [leads]);
 
   const isManager = (MANAGERS as readonly string[]).includes(userEmail);
 
@@ -342,9 +381,10 @@ export default function AdminLeads() {
   };
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Telefono", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
+    const headers = ["Nome", "Email", "Telefono", "Fonte", "Qualità", "Lead score", "Obiettivo", "Tempistica", "Contatto", "Livello", "Score test", "Totale", "Completato", "Esito", "Note", "UTM Source", "UTM Campaign", "Creato", "Completato il"];
     const rows = filtered.map((l) => [
       l.name, l.email, l.phone,
+      SOURCE_META[leadSource(l)].label,
       l.lead_quality ?? "", l.lead_score ?? "",
       l.goal ? (GOAL_LABEL[l.goal] ?? l.goal) : "",
       l.timeline ? (TIMELINE_LABEL[l.timeline] ?? l.timeline) : "",
@@ -461,7 +501,28 @@ export default function AdminLeads() {
               <SelectItem value="cold">❄️ Cold</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sourceFilter} onValueChange={(v) => setSourceFilter(v as SourceKey | "all")}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Fonte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutte le fonti</SelectItem>
+              {(Object.keys(SOURCE_META) as SourceKey[]).map((k) => (
+                <SelectItem key={k} value={k}>
+                  {SOURCE_META[k].label} ({sourceCounts[k]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Card>
+
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(SOURCE_META) as SourceKey[]).map((k) => (
+            <Badge key={k} className={SOURCE_META[k].className}>
+              {SOURCE_META[k].label}: {sourceCounts[k]}
+            </Badge>
+          ))}
+        </div>
 
         {isManager && <SellerReport leads={leads} />}
 
@@ -472,6 +533,7 @@ export default function AdminLeads() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefono</TableHead>
+                <TableHead>Fonte</TableHead>
                 <TableHead>Qualità</TableHead>
                 <TableHead>Obiettivo</TableHead>
                 <TableHead>Tempistica</TableHead>
@@ -488,7 +550,7 @@ export default function AdminLeads() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={15} className="text-center text-muted-foreground py-8">
                     Nessun lead trovato
                   </TableCell>
                 </TableRow>
@@ -501,6 +563,11 @@ export default function AdminLeads() {
                     </TableCell>
                     <TableCell>
                       <a href={`tel:${l.phone}`} className="text-primary hover:underline">{l.phone}</a>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={SOURCE_META[leadSource(l)].className}>
+                        {SOURCE_META[leadSource(l)].label}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {l.lead_quality ? (
