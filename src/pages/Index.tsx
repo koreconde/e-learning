@@ -11,7 +11,7 @@ import { TestRunner } from "@/components/test/TestRunner";
 import type { AnsweredQuestion } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
 import { calculateLevel, type Result } from "@/data/questions";
-import { fbqTrack, ttqTrack } from "@/lib/fpixel";
+import { fbqTrack, ttqTrack, ttqIdentify } from "@/lib/fpixel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -81,6 +81,11 @@ const Index = () => {
   const handleContactChoice = async (choice: ContactChoice) => {
     if (contactSubmitting) return;
     setContactSubmitting(true);
+    // TikTok: advanced matching + Lead event at contact gate submission
+    if (lead) {
+      await ttqIdentify(lead.email, lead.phone);
+      ttqTrack("Lead", { content_name: "English Test Lead", contact_preference: choice });
+    }
     // Fire-and-forget save; UX should never block the user from the test
     if (leadTokenRef.current) {
       supabase.functions
