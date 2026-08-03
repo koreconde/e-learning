@@ -1,7 +1,7 @@
 // Sincronizzazione lead verso il CRM esterno (progetto Lovable "Lead Connect CRM").
 // Non deve MAI bloccare o far fallire il flusso della landing.
 
-const CRM_INGEST_URL = "https://xagdqzlbsltypdwftntb.supabase.co/functions/v1/ingest-lead";
+const CRM_INGEST_URL = "https://leads.englishinfinity.io/api/public/ingest-lead";
 
 export interface CrmLeadPayload {
   nome: string;
