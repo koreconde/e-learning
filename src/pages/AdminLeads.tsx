@@ -137,6 +137,9 @@ type Lead = {
   completed: boolean;
   utm_source: string | null;
   utm_campaign: string | null;
+  utm_medium: string | null;
+  referrer: string | null;
+  landing_url: string | null;
   created_at: string;
   completed_at: string | null;
   call_status: Outcome;
@@ -172,6 +175,34 @@ const QUALITY_STYLE: Record<string, string> = {
   warm: "bg-amber-500 text-white",
   cold: "bg-slate-400 text-white",
 };
+
+type SourceKey = "facebook" | "tiktok" | "google" | "other" | "direct";
+
+const SOURCE_META: Record<SourceKey, { label: string; className: string }> = {
+  facebook: { label: "📘 Facebook/IG", className: "bg-blue-600 text-white" },
+  tiktok: { label: "🎵 TikTok", className: "bg-slate-900 text-white" },
+  google: { label: "🔍 Google", className: "bg-emerald-600 text-white" },
+  other: { label: "🌐 Altro", className: "bg-violet-600 text-white" },
+  direct: { label: "➡️ Diretto", className: "bg-slate-400 text-white" },
+};
+
+function leadSource(l: {
+  utm_source: string | null;
+  utm_medium: string | null;
+  referrer: string | null;
+  landing_url: string | null;
+}): SourceKey {
+  const hay = [l.utm_source, l.utm_medium, l.referrer, l.landing_url]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (!hay.trim()) return "direct";
+  if (/ttclid|tiktok|tt_?ads|bytedance/.test(hay)) return "tiktok";
+  if (/fbclid|facebook|instagram|\bmeta\b|\bfb\b|\big\b/.test(hay)) return "facebook";
+  if (/gclid|google|youtube/.test(hay)) return "google";
+  if (l.utm_source || l.referrer) return "other";
+  return "direct";
+}
 
 export default function AdminLeads() {
   const navigate = useNavigate();
