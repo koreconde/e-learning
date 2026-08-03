@@ -14,9 +14,40 @@ export interface CrmLeadPayload {
   score?: number | null;
   livello?: string | null;
   test_score?: number | null;
+  test_total?: number | null;
   completato?: boolean;
   lista?: string | null;
   data_ingresso?: string | null;
+  // Attribuzione / sorgente
+  fonte?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  referrer?: string | null;
+  landing_url?: string | null;
+  note?: string | null;
+}
+
+/** Deriva la fonte leggibile (Facebook/IG, TikTok, Google, Altro, Diretto). */
+export function deriveSource(a: {
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  referrer?: string | null;
+  landing_url?: string | null;
+}): string {
+  const s = (a.utm_source ?? "").toLowerCase();
+  const m = (a.utm_medium ?? "").toLowerCase();
+  const ref = (a.referrer ?? "").toLowerCase();
+  const url = (a.landing_url ?? "").toLowerCase();
+  const blob = `${s} ${m} ${ref} ${url}`;
+
+  if (/fbclid|facebook|instagram|\big\b|\bfb\b|meta/.test(blob)) return "Facebook/IG";
+  if (/ttclid|tiktok|\bttq\b/.test(blob)) return "TikTok";
+  if (/google|gclid|\bads\b|adwords/.test(blob)) return "Google";
+  if (s || m || ref) return "Altro";
+  return "Diretto";
 }
 
 export async function syncLeadToCrm(payload: CrmLeadPayload): Promise<void> {
@@ -32,7 +63,11 @@ export async function syncLeadToCrm(payload: CrmLeadPayload): Promise<void> {
         "Content-Type": "application/json",
         "x-crm-ingest-secret": secret,
       },
-      body: JSON.stringify({ ...payload, lista: payload.lista ?? "test-englishinfinity" }),
+      body: JSON.stringify({
+        ...payload,
+        lista: payload.lista ?? "test-englishinfinity",
+        data_ingresso: payload.data_ingresso ?? new Date().toISOString(),
+      }),
     });
     const text = await res.text();
     if (!res.ok) {
