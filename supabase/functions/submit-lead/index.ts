@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
+import { syncLeadToCrm } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -235,6 +236,19 @@ Deno.serve(async (req) => {
     lead_quality: scoring.quality,
   };
   const idemBase = `${data.email}-${Date.now()}`;
+
+  // Sync verso il CRM esterno (fire-and-forget)
+  await syncLeadToCrm({
+    nome: data.name,
+    email: data.email,
+    telefono: normalizedPhone,
+    obiettivo: data.goal,
+    tempistica: data.timeline,
+    qualita: scoring.quality,
+    score: scoring.score,
+    completato: false,
+  });
+
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   await Promise.all(

@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
+import { syncLeadToCrm } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,6 +102,16 @@ Deno.serve(async (req) => {
 
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const invokeHeaders = { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey };
+
+  // Aggiorna il CRM esterno con livello e punteggio del test
+  await syncLeadToCrm({
+    nome: lead.name,
+    email: lead.email,
+    telefono: lead.phone,
+    livello: level,
+    test_score: score,
+    completato: true,
+  });
 
   // Send result to lead
   supabase.functions
