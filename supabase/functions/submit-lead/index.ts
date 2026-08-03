@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
-import { syncLeadToCrm } from "../_shared/crm-sync.ts";
+import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -237,7 +237,17 @@ Deno.serve(async (req) => {
   };
   const idemBase = `${data.email}-${Date.now()}`;
 
-  // Sync verso il CRM esterno (fire-and-forget)
+  // Sync completa verso il CRM esterno
+  const attribution = {
+    utm_source: data.attribution.utm_source ?? null,
+    utm_medium: data.attribution.utm_medium ?? null,
+    utm_campaign: data.attribution.utm_campaign ?? null,
+    utm_content: data.attribution.utm_content ?? null,
+    utm_term: data.attribution.utm_term ?? null,
+    referrer: data.attribution.referrer ?? null,
+    landing_url: data.attribution.landing_url ?? null,
+  };
+  const fonte = deriveSource(attribution);
   await syncLeadToCrm({
     nome: data.name,
     email: data.email,
@@ -247,6 +257,9 @@ Deno.serve(async (req) => {
     qualita: scoring.quality,
     score: scoring.score,
     completato: false,
+    fonte,
+    ...attribution,
+    note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline}`,
   });
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
