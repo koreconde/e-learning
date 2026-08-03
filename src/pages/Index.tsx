@@ -101,7 +101,7 @@ const Index = () => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
 
-  const handleTestFinish = (correctIds: number[], details: AnsweredQuestion[]) => {
+  const handleTestFinish = async (correctIds: number[], details: AnsweredQuestion[]) => {
     const r = calculateLevel(correctIds);
     setResult(r);
     fbqTrack("CompleteRegistration", {
@@ -109,6 +109,7 @@ const Index = () => {
       value: r.score,
       level: r.level,
     });
+    if (lead) await ttqIdentify(lead.email, lead.phone);
     ttqTrack("CompleteRegistration", {
       content_name: "English Test Completed",
       value: r.score,
