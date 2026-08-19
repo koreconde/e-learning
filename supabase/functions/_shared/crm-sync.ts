@@ -45,6 +45,7 @@ export function deriveSource(a: {
 
   if (/fbclid|facebook|instagram|\big\b|\bfb\b|meta/.test(blob)) return "Facebook/IG";
   if (/ttclid|tiktok|\bttq\b/.test(blob)) return "TikTok";
+  if (/li_fat_id|linkedin|\blnkd\b/.test(blob)) return "LinkedIn";
   if (/google|gclid|\bads\b|adwords/.test(blob)) return "Google";
   if (s || m || ref) return "Altro";
   return "Diretto";
