@@ -176,11 +176,12 @@ const QUALITY_STYLE: Record<string, string> = {
   cold: "bg-slate-400 text-white",
 };
 
-type SourceKey = "facebook" | "tiktok" | "google" | "other" | "direct";
+type SourceKey = "facebook" | "tiktok" | "linkedin" | "google" | "other" | "direct";
 
 const SOURCE_META: Record<SourceKey, { label: string; className: string }> = {
   facebook: { label: "📘 Facebook/IG", className: "bg-blue-600 text-white" },
   tiktok: { label: "🎵 TikTok", className: "bg-slate-900 text-white" },
+  linkedin: { label: "💼 LinkedIn", className: "bg-sky-700 text-white" },
   google: { label: "🔍 Google", className: "bg-emerald-600 text-white" },
   other: { label: "🌐 Altro", className: "bg-violet-600 text-white" },
   direct: { label: "➡️ Diretto", className: "bg-slate-400 text-white" },
@@ -198,6 +199,7 @@ function leadSource(l: {
     .toLowerCase();
   if (!hay.trim()) return "direct";
   if (/ttclid|tiktok|tt_?ads|bytedance/.test(hay)) return "tiktok";
+  if (/li_fat_id|linkedin|\blnkd\b/.test(hay)) return "linkedin";
   if (/fbclid|facebook|instagram|\bmeta\b|\bfb\b|\big\b/.test(hay)) return "facebook";
   if (/gclid|google|youtube/.test(hay)) return "google";
   if (l.utm_source || l.referrer) return "other";
@@ -283,7 +285,7 @@ export default function AdminLeads() {
   }, [leads, q, filter, statusFilter, qualityFilter, sourceFilter, userEmail]);
 
   const sourceCounts = useMemo(() => {
-    const c: Record<SourceKey, number> = { facebook: 0, tiktok: 0, google: 0, other: 0, direct: 0 };
+    const c: Record<SourceKey, number> = { facebook: 0, tiktok: 0, linkedin: 0, google: 0, other: 0, direct: 0 };
     for (const l of leads) c[leadSource(l)]++;
     return c;
   }, [leads]);
