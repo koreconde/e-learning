@@ -22,6 +22,24 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route
+            path="/li"
+            element={
+              <Navigate
+                to="/?utm_source=linkedin&utm_medium=organic&utm_campaign=post_organico"
+                replace
+              />
+            }
+          />
+          <Route
+            path="/linkedin"
+            element={
+              <Navigate
+                to="/?utm_source=linkedin&utm_medium=organic&utm_campaign=post_organico"
+                replace
+              />
+            }
+          />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/admin/auth" element={<AdminAuth />} />
           <Route
