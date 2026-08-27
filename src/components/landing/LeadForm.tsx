@@ -23,6 +23,8 @@ export interface Lead {
   phone: string;
   goal: string;
   timeline: string;
+  eta: string;
+  occupazione: string;
 }
 
 // Strict name: at least 2 words, only letters/spaces/apostrophes/hyphens
@@ -31,6 +33,14 @@ const PHONE_RE = /^\+?[0-9 ()\-.]{8,25}$/;
 
 const GOALS = ["lavoro", "studio", "viaggio", "curiosita"] as const;
 const TIMELINES = ["subito", "1_3_mesi", "piu_avanti", "non_so"] as const;
+const AGE_RANGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
+const OCCUPAZIONI = [
+  "Lavoratore dipendente",
+  "Libero professionista",
+  "Imprenditore",
+  "Studente",
+  "Non lavoratore",
+] as const;
 
 const schema = z.object({
   name: z
