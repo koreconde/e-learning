@@ -48,6 +48,8 @@ const Index = () => {
           phone: l.phone,
           goal: l.goal,
           timeline: l.timeline,
+          eta: l.eta,
+          occupazione: l.occupazione,
           consent: true,
           turnstileToken: meta.turnstileToken,
           elapsedMs: meta.elapsedMs,

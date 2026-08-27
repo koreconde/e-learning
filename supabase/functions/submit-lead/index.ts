@@ -28,6 +28,14 @@ const BodySchema = z.object({
   phone: z.string().trim().min(8).max(25),
   goal: z.enum(["lavoro", "studio", "viaggio", "curiosita"]),
   timeline: z.enum(["subito", "1_3_mesi", "piu_avanti", "non_so"]),
+  eta: z.enum(["18-24", "25-34", "35-44", "45-54", "55+"]),
+  occupazione: z.enum([
+    "Lavoratore dipendente",
+    "Libero professionista",
+    "Imprenditore",
+    "Studente",
+    "Non lavoratore",
+  ]),
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
   // Honeypot — must be empty
