@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
     completato: false,
     fonte,
     ...attribution,
-    note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline}`,
+    note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline} | Età: ${data.eta} | Occupazione: ${data.occupazione}`,
   });
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
