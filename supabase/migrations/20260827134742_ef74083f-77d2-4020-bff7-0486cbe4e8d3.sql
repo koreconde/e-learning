@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS eta text, ADD COLUMN IF NOT EXISTS occupazione text;
