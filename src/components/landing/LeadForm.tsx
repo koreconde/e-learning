@@ -23,6 +23,8 @@ export interface Lead {
   phone: string;
   goal: string;
   timeline: string;
+  eta: string;
+  occupazione: string;
 }
 
 // Strict name: at least 2 words, only letters/spaces/apostrophes/hyphens
@@ -31,6 +33,14 @@ const PHONE_RE = /^\+?[0-9 ()\-.]{8,25}$/;
 
 const GOALS = ["lavoro", "studio", "viaggio", "curiosita"] as const;
 const TIMELINES = ["subito", "1_3_mesi", "piu_avanti", "non_so"] as const;
+const AGE_RANGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
+const OCCUPAZIONI = [
+  "Lavoratore dipendente",
+  "Libero professionista",
+  "Imprenditore",
+  "Studente",
+  "Non lavoratore",
+] as const;
 
 const schema = z.object({
   name: z
@@ -52,6 +62,8 @@ const schema = z.object({
     }, "Inserisci un numero di telefono reale e valido"),
   goal: z.enum(GOALS, { errorMap: () => ({ message: "Seleziona un obiettivo" }) }),
   timeline: z.enum(TIMELINES, { errorMap: () => ({ message: "Seleziona una tempistica" }) }),
+  eta: z.enum(AGE_RANGES, { errorMap: () => ({ message: "Seleziona la tua fascia di età" }) }),
+  occupazione: z.enum(OCCUPAZIONI, { errorMap: () => ({ message: "Seleziona la tua occupazione" }) }),
   consent: z.literal(true, { errorMap: () => ({ message: "Consenso obbligatorio" }) }),
   // Honeypot — must remain empty
   website: z.string().max(0, "Spam rilevato").optional(),
@@ -92,6 +104,8 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
       phone: "+39 ",
       goal: undefined as unknown as (typeof GOALS)[number],
       timeline: undefined as unknown as (typeof TIMELINES)[number],
+      eta: undefined as unknown as (typeof AGE_RANGES)[number],
+      occupazione: undefined as unknown as (typeof OCCUPAZIONI)[number],
       consent: false as unknown as true,
       website: "",
     },
@@ -100,6 +114,8 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
   const consentChecked = watch("consent");
   const goalValue = watch("goal");
   const timelineValue = watch("timeline");
+  const etaValue = watch("eta");
+  const occupazioneValue = watch("occupazione");
 
   const submit = handleSubmit(async (data) => {
     if (!turnstileToken) {
@@ -108,7 +124,15 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
     }
     const elapsedMs = Date.now() - mountedAtRef.current;
     await onSubmit(
-      { name: data.name, email: data.email, phone: data.phone, goal: data.goal, timeline: data.timeline },
+      {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        goal: data.goal,
+        timeline: data.timeline,
+        eta: data.eta,
+        occupazione: data.occupazione,
+      },
       { turnstileToken, elapsedMs, honeypot: data.website ?? "" },
     );
   });
@@ -210,6 +234,42 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
                 </SelectContent>
               </Select>
               {errors.timeline && <p className="mt-1 text-sm text-destructive">{errors.timeline.message as string}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="eta">Fascia di età</Label>
+              <Select
+                value={etaValue}
+                onValueChange={(v) => setValue("eta", v as (typeof AGE_RANGES)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="eta" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona la tua fascia di età" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGE_RANGES.map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.eta && <p className="mt-1 text-sm text-destructive">{errors.eta.message as string}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="occupazione">Occupazione</Label>
+              <Select
+                value={occupazioneValue}
+                onValueChange={(v) => setValue("occupazione", v as (typeof OCCUPAZIONI)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="occupazione" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona la tua occupazione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OCCUPAZIONI.map((o) => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.occupazione && <p className="mt-1 text-sm text-destructive">{errors.occupazione.message as string}</p>}
             </div>
 
             {/* Honeypot — invisible to humans, visible to bots */}

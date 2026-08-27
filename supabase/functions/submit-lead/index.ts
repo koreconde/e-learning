@@ -28,6 +28,14 @@ const BodySchema = z.object({
   phone: z.string().trim().min(8).max(25),
   goal: z.enum(["lavoro", "studio", "viaggio", "curiosita"]),
   timeline: z.enum(["subito", "1_3_mesi", "piu_avanti", "non_so"]),
+  eta: z.enum(["18-24", "25-34", "35-44", "45-54", "55+"]),
+  occupazione: z.enum([
+    "Lavoratore dipendente",
+    "Libero professionista",
+    "Imprenditore",
+    "Studente",
+    "Non lavoratore",
+  ]),
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
   // Honeypot — must be empty
@@ -207,6 +215,8 @@ Deno.serve(async (req) => {
       lead_token: leadToken,
       goal: data.goal,
       timeline: data.timeline,
+      eta: data.eta,
+      occupazione: data.occupazione,
       lead_score: scoring.score,
       lead_quality: scoring.quality,
       utm_source: data.attribution.utm_source ?? null,
@@ -232,6 +242,8 @@ Deno.serve(async (req) => {
     phone: data.phone,
     goal: data.goal,
     timeline: data.timeline,
+    eta: data.eta,
+    occupazione: data.occupazione,
     lead_score: scoring.score,
     lead_quality: scoring.quality,
   };
@@ -254,12 +266,14 @@ Deno.serve(async (req) => {
     telefono: normalizedPhone,
     obiettivo: data.goal,
     tempistica: data.timeline,
+    eta: data.eta,
+    occupazione: data.occupazione,
     qualita: scoring.quality,
     score: scoring.score,
     completato: false,
     fonte,
     ...attribution,
-    note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline}`,
+    note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline} | Età: ${data.eta} | Occupazione: ${data.occupazione}`,
   });
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
