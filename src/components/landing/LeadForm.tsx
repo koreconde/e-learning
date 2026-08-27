@@ -114,6 +114,8 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
   const consentChecked = watch("consent");
   const goalValue = watch("goal");
   const timelineValue = watch("timeline");
+  const etaValue = watch("eta");
+  const occupazioneValue = watch("occupazione");
 
   const submit = handleSubmit(async (data) => {
     if (!turnstileToken) {
@@ -122,7 +124,15 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
     }
     const elapsedMs = Date.now() - mountedAtRef.current;
     await onSubmit(
-      { name: data.name, email: data.email, phone: data.phone, goal: data.goal, timeline: data.timeline },
+      {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        goal: data.goal,
+        timeline: data.timeline,
+        eta: data.eta,
+        occupazione: data.occupazione,
+      },
       { turnstileToken, elapsedMs, honeypot: data.website ?? "" },
     );
   });
