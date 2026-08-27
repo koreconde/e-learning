@@ -9,6 +9,8 @@ export interface CrmLeadPayload {
   telefono: string | null;
   obiettivo?: string | null;
   tempistica?: string | null;
+  eta?: string | null;
+  occupazione?: string | null;
   contatto?: string | null;
   qualita?: string | null;
   score?: number | null;
