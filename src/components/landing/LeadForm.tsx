@@ -62,6 +62,8 @@ const schema = z.object({
     }, "Inserisci un numero di telefono reale e valido"),
   goal: z.enum(GOALS, { errorMap: () => ({ message: "Seleziona un obiettivo" }) }),
   timeline: z.enum(TIMELINES, { errorMap: () => ({ message: "Seleziona una tempistica" }) }),
+  eta: z.enum(AGE_RANGES, { errorMap: () => ({ message: "Seleziona la tua fascia di età" }) }),
+  occupazione: z.enum(OCCUPAZIONI, { errorMap: () => ({ message: "Seleziona la tua occupazione" }) }),
   consent: z.literal(true, { errorMap: () => ({ message: "Consenso obbligatorio" }) }),
   // Honeypot — must remain empty
   website: z.string().max(0, "Spam rilevato").optional(),
@@ -102,6 +104,8 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
       phone: "+39 ",
       goal: undefined as unknown as (typeof GOALS)[number],
       timeline: undefined as unknown as (typeof TIMELINES)[number],
+      eta: undefined as unknown as (typeof AGE_RANGES)[number],
+      occupazione: undefined as unknown as (typeof OCCUPAZIONI)[number],
       consent: false as unknown as true,
       website: "",
     },
