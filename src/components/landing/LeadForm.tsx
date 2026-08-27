@@ -236,6 +236,42 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
               {errors.timeline && <p className="mt-1 text-sm text-destructive">{errors.timeline.message as string}</p>}
             </div>
 
+            <div>
+              <Label htmlFor="eta">Fascia di età</Label>
+              <Select
+                value={etaValue}
+                onValueChange={(v) => setValue("eta", v as (typeof AGE_RANGES)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="eta" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona la tua fascia di età" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGE_RANGES.map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.eta && <p className="mt-1 text-sm text-destructive">{errors.eta.message as string}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="occupazione">Occupazione</Label>
+              <Select
+                value={occupazioneValue}
+                onValueChange={(v) => setValue("occupazione", v as (typeof OCCUPAZIONI)[number], { shouldValidate: true })}
+              >
+                <SelectTrigger id="occupazione" className="mt-1.5 h-12 rounded-xl">
+                  <SelectValue placeholder="Seleziona la tua occupazione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OCCUPAZIONI.map((o) => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.occupazione && <p className="mt-1 text-sm text-destructive">{errors.occupazione.message as string}</p>}
+            </div>
+
             {/* Honeypot — invisible to humans, visible to bots */}
             <div
               aria-hidden="true"
