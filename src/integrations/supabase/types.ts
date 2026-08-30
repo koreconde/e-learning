@@ -141,6 +141,7 @@ export type Database = {
           name: string
           occupazione: string | null
           phone: string
+          phone_verified: boolean
           referrer: string | null
           score: number | null
           timeline: string | null
@@ -175,6 +176,7 @@ export type Database = {
           name: string
           occupazione?: string | null
           phone: string
+          phone_verified?: boolean
           referrer?: string | null
           score?: number | null
           timeline?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           name?: string
           occupazione?: string | null
           phone?: string
+          phone_verified?: boolean
           referrer?: string | null
           score?: number | null
           timeline?: string | null
@@ -218,6 +221,42 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+        }
+        Relationships: []
+      }
+      phone_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          ip: string | null
+          phone: string
+          token: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip?: string | null
+          phone: string
+          token?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip?: string | null
+          phone?: string
+          token?: string
+          verified?: boolean
+          verified_at?: string | null
         }
         Relationships: []
       }

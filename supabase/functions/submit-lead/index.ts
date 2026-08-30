@@ -38,6 +38,8 @@ const BodySchema = z.object({
   ]),
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
+  phoneVerificationToken: z.string().uuid({ message: "Verifica il numero di telefono" }),
+
   // Honeypot — must be empty
   website: z.string().max(0).optional().default(""),
   // Anti-bot: how long the user spent on the form (ms)
@@ -196,6 +198,26 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Phone must be verified via WhatsApp OTP
+  const { data: verification } = await supabase
+    .from("phone_verifications")
+    .select("id, phone, verified, expires_at")
+    .eq("token", data.phoneVerificationToken)
+    .maybeSingle();
+
+  if (
+    !verification ||
+    !verification.verified ||
+    verification.phone !== normalizedPhone ||
+    new Date(verification.expires_at) < new Date()
+  ) {
+    return jsonResponse(
+      { error: "Numero non verificato. Ripeti la verifica WhatsApp." },
+      403,
+    );
+  }
+
+
   const leadToken = crypto.randomUUID();
   const scoring = scoreLead({
     goal: data.goal,
@@ -211,8 +233,11 @@ Deno.serve(async (req) => {
       name: data.name,
       email: data.email,
       phone: normalizedPhone,
+      phone_verified: true,
       consent: true,
       lead_token: leadToken,
+
+
       goal: data.goal,
       timeline: data.timeline,
       eta: data.eta,

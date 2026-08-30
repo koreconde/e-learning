@@ -52,6 +52,8 @@ const Index = () => {
           occupazione: l.occupazione,
           consent: true,
           turnstileToken: meta.turnstileToken,
+          phoneVerificationToken: meta.phoneVerificationToken,
+
           elapsedMs: meta.elapsedMs,
           website: meta.honeypot,
           attribution,

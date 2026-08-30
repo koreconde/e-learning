@@ -34,3 +34,10 @@ verify_jwt = false
 
 [functions.text-to-speech]
 verify_jwt = false
+
+[functions.phone-verify-start]
+verify_jwt = false
+
+[functions.phone-verify-check]
+verify_jwt = false
+

@@ -1,0 +1,156 @@
+import { useEffect, useState } from "react";
+import { MessageCircle, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PhoneVerifyDialogProps {
+  open: boolean;
+  phone: string;
+  onOpenChange: (open: boolean) => void;
+  onVerified: (verificationToken: string) => void;
+}
+
+export const PhoneVerifyDialog = ({
+  open,
+  phone,
+  onOpenChange,
+  onVerified,
+}: PhoneVerifyDialogProps) => {
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (!open) {
+      setVerificationId(null);
+      setCode("");
+      setError(null);
+      setCooldown(0);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const sendCode = async (channel: "whatsapp" | "sms" = "whatsapp") => {
+    setSending(true);
+    setError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("phone-verify-start", {
+        body: { phone, channel },
+      });
+      if (fnError || !data?.success) {
+        setError((data?.error as string) || "Impossibile inviare il codice. Riprova.");
+        return;
+      }
+      setVerificationId(data.verificationId as string);
+      setCooldown(45);
+    } catch {
+      setError("Errore di rete. Riprova tra qualche istante.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && !verificationId && !sending) void sendCode("whatsapp");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const submitCode = async () => {
+    if (!verificationId || code.trim().length < 4) return;
+    setChecking(true);
+    setError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("phone-verify-check", {
+        body: { verificationId, code: code.trim() },
+      });
+      if (fnError || !data?.success) {
+        setError((data?.error as string) || "Codice errato. Riprova.");
+        return;
+      }
+      onVerified(data.verificationToken as string);
+    } catch {
+      setError("Errore di rete. Riprova tra qualche istante.");
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-accent" />
+            Verifica il tuo numero
+          </DialogTitle>
+          <DialogDescription>
+            Ti abbiamo inviato un codice a 6 cifre su WhatsApp al numero{" "}
+            <span className="font-medium text-foreground">{phone}</span>. Inseriscilo qui sotto per
+            accedere al test.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <Input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={10}
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void submitCode();
+            }}
+            className="h-14 rounded-xl text-center text-2xl tracking-[0.5em]"
+          />
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <Button
+            type="button"
+            onClick={submitCode}
+            disabled={checking || sending || code.length < 4}
+            className="h-12 w-full rounded-full"
+          >
+            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conferma codice"}
+          </Button>
+
+          <div className="flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => sendCode("whatsapp")}
+              disabled={sending || cooldown > 0}
+              className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
+            >
+              {cooldown > 0 ? `Rinvia tra ${cooldown}s` : "Rinvia su WhatsApp"}
+            </button>
+            <button
+              type="button"
+              onClick={() => sendCode("sms")}
+              disabled={sending || cooldown > 0}
+              className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
+            >
+              Invia via SMS
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
