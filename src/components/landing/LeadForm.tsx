@@ -15,7 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { PhoneVerifyDialog } from "./PhoneVerifyDialog";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+
 
 export interface Lead {
   name: string;
@@ -75,6 +77,7 @@ export interface LeadSubmitMeta {
   turnstileToken: string;
   elapsedMs: number;
   honeypot: string;
+  phoneVerificationToken: string;
 }
 
 interface LeadFormProps {
@@ -84,6 +87,8 @@ interface LeadFormProps {
 export const LeadForm = ({ onSubmit }: LeadFormProps) => {
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [turnstileError, setTurnstileError] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [pendingLead, setPendingLead] = useState<{ lead: Lead; elapsedMs: number; honeypot: string } | null>(null);
   const mountedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
@@ -123,8 +128,8 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
       return;
     }
     const elapsedMs = Date.now() - mountedAtRef.current;
-    await onSubmit(
-      {
+    setPendingLead({
+      lead: {
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -133,9 +138,23 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
         eta: data.eta,
         occupazione: data.occupazione,
       },
-      { turnstileToken, elapsedMs, honeypot: data.website ?? "" },
-    );
+      elapsedMs,
+      honeypot: data.website ?? "",
+    });
+    setVerifyOpen(true);
   });
+
+  const handleVerified = async (phoneVerificationToken: string) => {
+    if (!pendingLead) return;
+    setVerifyOpen(false);
+    await onSubmit(pendingLead.lead, {
+      turnstileToken,
+      elapsedMs: pendingLead.elapsedMs,
+      honeypot: pendingLead.honeypot,
+      phoneVerificationToken,
+    });
+  };
+
 
   return (
     <section id="lead-form" className="bg-foreground py-24 text-background">
