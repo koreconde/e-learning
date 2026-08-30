@@ -233,8 +233,9 @@ Deno.serve(async (req) => {
       name: data.name,
       email: data.email,
       phone: normalizedPhone,
+      phone_verified: true,
       consent: true,
-      lead_token: leadToken,
+
       goal: data.goal,
       timeline: data.timeline,
       eta: data.eta,
