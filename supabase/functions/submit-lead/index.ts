@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
     landing_url: data.attribution.landing_url ?? null,
   };
   const fonte = deriveSource(attribution);
-  await syncLeadToCrm({
+  const crmPromise = syncLeadToCrm({
     nome: data.name,
     email: data.email,
     telefono: normalizedPhone,
