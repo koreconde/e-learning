@@ -198,6 +198,26 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Phone must be verified via WhatsApp OTP
+  const { data: verification } = await supabase
+    .from("phone_verifications")
+    .select("id, phone, verified, expires_at")
+    .eq("token", data.phoneVerificationToken)
+    .maybeSingle();
+
+  if (
+    !verification ||
+    !verification.verified ||
+    verification.phone !== normalizedPhone ||
+    new Date(verification.expires_at) < new Date()
+  ) {
+    return jsonResponse(
+      { error: "Numero non verificato. Ripeti la verifica WhatsApp." },
+      403,
+    );
+  }
+
+
   const leadToken = crypto.randomUUID();
   const scoring = scoreLead({
     goal: data.goal,
