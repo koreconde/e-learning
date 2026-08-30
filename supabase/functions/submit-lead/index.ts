@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
     landing_url: data.attribution.landing_url ?? null,
   };
   const fonte = deriveSource(attribution);
-  await syncLeadToCrm({
+  const crmPromise = syncLeadToCrm({
     nome: data.name,
     email: data.email,
     telefono: normalizedPhone,
@@ -299,11 +299,11 @@ Deno.serve(async (req) => {
     fonte,
     ...attribution,
     note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline} | Età: ${data.eta} | Occupazione: ${data.occupazione}`,
-  });
+  }).catch((e) => console.error("crm sync failed", e));
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  await Promise.all(
+  const emailPromise = Promise.all(
     admins.map((addr) =>
       supabase.functions
         .invoke("send-transactional-email", {
@@ -322,6 +322,11 @@ Deno.serve(async (req) => {
         .catch((e) => console.error("admin email exception", addr, e)),
     ),
   );
+
+  // Non bloccare la risposta: CRM + email admin proseguono in background
+  const bg = Promise.allSettled([crmPromise, emailPromise]);
+  // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(bg);
 
   return jsonResponse({ success: true, leadId: inserted.id, leadToken });
 });
