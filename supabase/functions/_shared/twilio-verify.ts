@@ -1,7 +1,10 @@
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const SERVICE_NAME = "English Infinity";
+// Known Verify service SID — avoids an extra Twilio round-trip on every request.
+const DEFAULT_SERVICE_SID = "VA422639a8c5eb1f4341d1da210d64f693";
 
-let cachedServiceSid: string | null = null;
+let cachedServiceSid: string | null = DEFAULT_SERVICE_SID;
+
 
 function authHeaders() {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
