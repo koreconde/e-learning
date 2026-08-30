@@ -357,6 +357,14 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
           </div>
         </motion.form>
       </div>
+
+      <PhoneVerifyDialog
+        open={verifyOpen}
+        phone={pendingLead?.lead.phone ?? ""}
+        onOpenChange={setVerifyOpen}
+        onVerified={handleVerified}
+      />
     </section>
+
   );
 };
