@@ -38,6 +38,8 @@ const BodySchema = z.object({
   ]),
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
+  phoneVerificationToken: z.string().uuid({ message: "Verifica il numero di telefono" }),
+
   // Honeypot — must be empty
   website: z.string().max(0).optional().default(""),
   // Anti-bot: how long the user spent on the form (ms)
