@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
   if (error) return new Response(error.message, { status: 500 });
   if (dryRun) return Response.json({ count: leads.length });
 
+  const run = async () => {
   const results: Record<string, number> = {};
   const failures: string[] = [];
   for (const l of leads) {
@@ -37,8 +38,13 @@ Deno.serve(async (req) => {
       }),
     });
     results[res.status] = (results[res.status] ?? 0) + 1;
-    if (!res.ok) failures.push(`${l.email}: ${res.status} ${(await res.text()).slice(0, 150)}`);
-    else await res.text();
+    const t = (await res.text()).slice(0, 150);
+    if (!res.ok) failures.push(`${l.email}: ${res.status} ${t}`);
+    console.log("BF", res.status, l.email, t);
   }
-  return Response.json({ total: leads.length, results, failures: failures.slice(0, 20) });
+  console.log("BF DONE", JSON.stringify({ total: leads.length, results, failures: failures.slice(0, 20) }));
+  };
+  // @ts-ignore EdgeRuntime
+  EdgeRuntime.waitUntil(run());
+  return Response.json({ started: leads.length });
 });
