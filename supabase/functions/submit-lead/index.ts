@@ -237,6 +237,14 @@ Deno.serve(async (req) => {
       consent: true,
       lead_token: leadToken,
 
+      // Reset test state: a re-submission with the same email is a new attempt
+      completed: false,
+      level: null,
+      score: null,
+      total: null,
+      errors: null,
+      completed_at: null,
+      contact_preference: null,
 
       goal: data.goal,
       timeline: data.timeline,
