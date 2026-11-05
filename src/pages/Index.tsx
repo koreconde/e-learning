@@ -14,6 +14,7 @@ import { calculateLevel, type Result } from "@/data/questions";
 import { fbqTrack, ttqTrack, ttqIdentify } from "@/lib/fpixel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { readAdsAttribution } from "@/lib/ads-attribution";
 
 type Stage = "landing" | "contact" | "test" | "result";
 
@@ -57,6 +58,7 @@ const Index = () => {
           elapsedMs: meta.elapsedMs,
           website: meta.honeypot,
           attribution,
+          adsAttribution: readAdsAttribution(),
         },
       });
 

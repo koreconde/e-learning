@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
+import { sendLeadToEscapeVision } from "../_shared/escapevision.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,12 @@ const BodySchema = z.object({
   consent: z.literal(true),
   turnstileToken: z.string().min(10).max(2048),
   phoneVerificationToken: z.string().uuid({ message: "Verifica il numero di telefono" }),
+  adsAttribution: z.object({
+    gclid: z.string().regex(/^[A-Za-z0-9_\-.~]{10,255}$/).optional(),
+    gbraid: z.string().regex(/^[A-Za-z0-9_\-.~]{10,255}$/).optional(),
+    wbraid: z.string().regex(/^[A-Za-z0-9_\-.~]{10,255}$/).optional(),
+    ts: z.number().finite(),
+  }).optional().catch(undefined),
 
   // Honeypot — must be empty
   website: z.string().max(0).optional().default(""),
@@ -269,6 +276,14 @@ Deno.serve(async (req) => {
   }
 
   // Notify admins (fire-and-forget). Errors logged but don't block.
+  // Exactly one dispatch per successful save; never dispatch from complete-test.
+  const escapeVisionPromise = sendLeadToEscapeVision({
+    name: data.name,
+    email: data.email,
+    phone: normalizedPhone,
+    adsAttribution: data.adsAttribution,
+  });
+
   const adminPayload = {
     name: data.name,
     email: data.email,
@@ -332,7 +347,7 @@ Deno.serve(async (req) => {
   );
 
   // Non bloccare la risposta: CRM + email admin proseguono in background
-  const bg = Promise.allSettled([crmPromise, emailPromise]);
+  const bg = Promise.allSettled([crmPromise, emailPromise, escapeVisionPromise]);
   // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
   if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(bg);
 

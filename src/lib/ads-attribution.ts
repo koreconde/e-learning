@@ -1,0 +1,2 @@
+export { captureAdsAttribution, readAdsAttribution, validAdsClickIds } from "../../supabase/functions/_shared/ads-attribution.ts";
+export type { AdsAttribution } from "../../supabase/functions/_shared/ads-attribution.ts";
