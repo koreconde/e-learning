@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
-import { sendLeadToEscapeVision } from "../../../src/lib/escapevision.ts";
+import { sendLeadToEscapeVision } from "../_shared/escapevision.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

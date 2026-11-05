@@ -1,0 +1,1 @@
+export { sendLeadToEscapeVision } from "../../supabase/functions/_shared/escapevision.ts";
