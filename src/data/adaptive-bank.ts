@@ -10,7 +10,7 @@ const listening = (id: number, level: CEFRLevel, audioText: string, spec: Choice
 
 // Editorial difficulty bands are provisional, not psychometrically calibrated.
 export const adaptiveBank: Question[] = [
-  ...questions.filter(q => q.type !== 'writing' && q.type !== 'speaking' && q.type !== 'reorder'),
+  ...questions.filter(q => q.type !== 'writing' && q.type !== 'speaking' && q.type !== 'reorder' && q.id !== 13),
   choice(101, 'A1', 'Grammar', ['There ___ two chairs in the kitchen.', ['is', 'are', 'am', 'be'], 1]),
   choice(102, 'A1', 'Grammar', ['Does Anna work here? Yes, she ___.', ['do', 'is', 'does', 'has'], 2]),
   choice(103, 'A1', 'Vocabulary', ['I am thirsty. I would like some ___.', ['water', 'bread', 'sleep', 'shoes'], 0]),

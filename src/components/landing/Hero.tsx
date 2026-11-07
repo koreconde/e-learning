@@ -66,7 +66,7 @@ export const Hero = ({ onStart }: HeroProps) => (
           </span>
         </h1>
         <p className="mt-7 max-w-lg text-lg text-muted-foreground md:text-xl">
-          Test gratuito di 10 minuti basato sul framework Cambridge · CEFR (A1 → C1). Grammatica, vocabolario, reading e listening.
+          Test gratuito, fino a 12 minuti, per una stima orientativa del livello CEFR (A1 → C1). Grammatica, vocabolario, reading e listening.
         </p>
         <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <PillButton variant="yellow" onClick={onStart}>
@@ -82,7 +82,7 @@ export const Hero = ({ onStart }: HeroProps) => (
           </PillButton>
         </div>
         <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          {["10 minuti", "100% gratuito", "Cambridge-based"].map((t) => (
+          {["Fino a 12 minuti", "100% gratuito", "Livello indicativo CEFR"].map((t) => (
             <span key={t} className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-foreground" />
               {t}
