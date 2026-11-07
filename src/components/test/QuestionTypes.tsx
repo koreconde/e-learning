@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Volume2, Mic, Square, RotateCcw, Loader2 } from "lucide-react";
+import { Mic, Square, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ListeningAudio } from "./ListeningAudio";
 import { Input } from "@/components/ui/input";
