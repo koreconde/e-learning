@@ -4,13 +4,13 @@ import { ClipboardList, GraduationCap, MessageSquare } from "lucide-react";
 const steps = [
   {
     icon: ClipboardList,
-    title: "Rispondi a 20 domande",
-    desc: "Grammar, Vocabulary, Listening, Reading, Writing e Speaking. In 12 minuti.",
+    title: "Metti alla prova il tuo inglese",
+    desc: "Grammar, Vocabulary, Reading e Listening. Fino a 24 domande, massimo 12 minuti.",
   },
   {
     icon: GraduationCap,
-    title: "Ricevi il tuo livello CEFR",
-    desc: "Da A1 a C1, con un'analisi dettagliata delle tue competenze.",
+    title: "Ricevi una stima del tuo livello",
+    desc: "Un'indicazione da A1 a C1, da approfondire con un docente.",
   },
   {
     icon: MessageSquare,
@@ -34,7 +34,7 @@ export const HowItWorks = () => (
           Come funziona
         </div>
         <h2 className="font-display text-4xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-5xl">
-          Tre passi verso il tuo livello reale
+          Tre passi per conoscere il tuo inglese
         </h2>
       </motion.div>
       <div className="grid gap-6 md:grid-cols-3">

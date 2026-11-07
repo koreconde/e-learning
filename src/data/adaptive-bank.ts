@@ -1,0 +1,54 @@
+import { questions, type CEFRLevel, type Question, type MultipleChoiceQ, type ListeningQ } from './questions';
+
+type ChoiceSpec = [string, string[], number];
+const choice = (id: number, level: CEFRLevel, skill: 'Grammar' | 'Vocabulary' | 'Reading', spec: ChoiceSpec): MultipleChoiceQ => ({
+  id, level, category: skill, skill, type: 'multiple-choice', text: spec[0], options: spec[1], correct: spec[2],
+});
+const listening = (id: number, level: CEFRLevel, audioText: string, spec: ChoiceSpec): ListeningQ => ({
+  id, level, category: 'Listening', skill: 'Listening', type: 'listening', audioText, prompt: spec[0], options: spec[1], correct: spec[2],
+});
+
+// Editorial difficulty bands are provisional, not psychometrically calibrated.
+export const adaptiveBank: Question[] = [
+  ...questions.filter(q => q.type !== 'writing' && q.type !== 'speaking' && q.type !== 'reorder' && q.id !== 13),
+  choice(101, 'A1', 'Grammar', ['There ___ two chairs in the kitchen.', ['is', 'are', 'am', 'be'], 1]),
+  choice(102, 'A1', 'Grammar', ['Does Anna work here? Yes, she ___.', ['do', 'is', 'does', 'has'], 2]),
+  choice(103, 'A1', 'Vocabulary', ['I am thirsty. I would like some ___.', ['water', 'bread', 'sleep', 'shoes'], 0]),
+  choice(104, 'A1', 'Vocabulary', ['My sister is my parents’ ___.', ['son', 'husband', 'father', 'daughter'], 3]),
+  choice(105, 'A1', 'Reading', ['“The café opens at 8 a.m. It closes at 4 p.m. on Mondays.” When can you visit on Monday?', ['At 6 p.m.', 'At 7 a.m.', 'At 10 a.m.', 'At 5 p.m.'], 2]),
+  choice(106, 'A1', 'Reading', ['“Hi Leo, please bring your blue notebook tomorrow. You don’t need your dictionary. — Amy” What should Leo bring?', ['A dictionary', 'A blue notebook', 'A laptop', 'A new pen'], 1]),
+  listening(107, 'A1', 'I work in a shop. I start at nine in the morning and finish at five in the afternoon.', ['When does the speaker finish work?', ['At nine', 'At twelve', 'At five', 'At six'], 2]),
+  listening(108, 'A1', 'Hi, this is Ben. I cannot come on Tuesday. Can we meet on Wednesday instead?', ['Which day does Ben suggest?', ['Monday', 'Tuesday', 'Friday', 'Wednesday'], 3]),
+  choice(201, 'A2', 'Grammar', ['You ___ park here. The sign says “No parking”.', ['mustn’t', 'don’t have to', 'could', 'should'], 0]),
+  choice(202, 'A2', 'Grammar', ['This bag is ___ than that one.', ['heavy', 'heaviest', 'heavier', 'more heavy'], 2]),
+  choice(203, 'A2', 'Vocabulary', ['I kept the ___ so I could return the jacket to the shop.', ['menu', 'receipt', 'timetable', 'passport'], 1]),
+  choice(204, 'A2', 'Vocabulary', ['The bus was full, so we had to ___ for the next one.', ['spend', 'miss', 'lose', 'wait'], 3]),
+  choice(205, 'A2', 'Reading', ['“Swimming lessons are cancelled this Saturday. Your payment will be used for next week’s lesson.” What happens to the payment?', ['It pays for the next lesson', 'It is lost', 'It must be paid again', 'It is returned immediately'], 0]),
+  choice(206, 'A2', 'Reading', ['“I usually cycle to work, but it was raining this morning, so I took the bus.” How did the writer travel today?', ['By bicycle', 'On foot', 'By bus', 'By car'], 2]),
+  listening(207, 'A2', 'The museum ticket is twelve pounds for adults. Students pay eight pounds if they show their student card.', ['What must a student show to pay £8?', ['A bus ticket', 'A student card', 'A bank card', 'A museum map'], 1]),
+  listening(208, 'A2', 'We booked a table for six people, but Tom cannot come. Please change the booking to five people. The time is still seven o’clock.', ['What needs to change?', ['The restaurant', 'The day', 'The time', 'The number of people'], 3]),
+  choice(301, 'B1', 'Grammar', ['I ___ dinner when the phone rang.', ['cook', 'have cooked', 'was cooking', 'am cooking'], 2]),
+  choice(302, 'B1', 'Grammar', ['If I had more free time, I ___ a new language.', ['will learn', 'would learn', 'learn', 'learned'], 1]),
+  choice(303, 'B1', 'Vocabulary', ['The match was ___ because of heavy snow and will take place next week.', ['postponed', 'repaired', 'reserved', 'replaced'], 0]),
+  choice(304, 'B1', 'Vocabulary', ['Please ___ the form and send it back by Friday.', ['put off', 'look after', 'give up', 'fill in'], 3]),
+  choice(305, 'B1', 'Reading', ['“The new library has fewer printed books, but offers longer opening hours and free access to online journals. Some readers miss the old collection, while others welcome the changes.” What is the main point?', ['Everyone dislikes the library', 'The library no longer has books', 'The changes have both advantages and drawbacks', 'Online journals require a fee'], 2]),
+  choice(306, 'B1', 'Reading', ['“Nina wanted to save money by repairing her bike herself. After watching a video, she realised she needed special tools that cost more than a repair at the local shop.” Why might Nina choose the shop?', ['The video was unavailable', 'Buying the tools would be more expensive', 'The shop sells videos', 'Her bike cannot be repaired'], 1]),
+  listening(307, 'B1', 'I used to drive to the office every day. Since the new train line opened, I only drive when I need to visit clients outside the city.', ['When does the speaker still drive?', ['For client visits outside the city', 'Every morning', 'Whenever trains are crowded', 'Only at weekends'], 0]),
+  listening(308, 'B1', 'I enjoyed the course, especially the practical exercises. The lectures were useful too, although I wish we had spent less time on theory and more time trying things ourselves.', ['What improvement does the speaker suggest?', ['More lectures', 'A shorter course', 'Fewer exercises', 'More practical work'], 3]),
+  choice(401, 'B2', 'Grammar', ['I wish I ___ the offer before the deadline yesterday.', ['accept', 'would accept', 'had accepted', 'have accepted'], 2]),
+  choice(402, 'B2', 'Grammar', ['The report ___ by Friday, according to the project plan.', ['must complete', 'must be completed', 'must have completing', 'must be completing'], 1]),
+  choice(403, 'B2', 'Vocabulary', ['The two departments need to ___ a compromise before the project can continue.', ['reach', 'arrive', 'do', 'take'], 0]),
+  choice(404, 'B2', 'Vocabulary', ['The evidence is ___: it does not allow us to reach a definite conclusion.', ['inevitable', 'irrelevant', 'irreplaceable', 'inconclusive'], 3]),
+  choice(405, 'B2', 'Reading', ['“The council’s cycling scheme has reduced car journeys in the centre. However, residents in outer districts say the scheme benefits those who already had good transport links. Expanding it might address this concern, but would require substantial funding.” What is the concern?', ['Cycling has increased traffic', 'Benefits are not evenly distributed', 'Nobody uses the scheme', 'The scheme has already expanded too far'], 1]),
+  choice(406, 'B2', 'Reading', ['“A four-day working week can improve morale, but compressing the same workload into fewer days may undermine that benefit. A successful trial therefore requires employers to rethink workloads, not merely timetables.” What does the writer recommend?', ['Keeping workloads unchanged', 'Extending working hours', 'Redesigning the amount of work as well as schedules', 'Ending every trial'], 2]),
+  listening(407, 'B2', 'The hotel was convenient for the conference and the staff were helpful. Given the price, though, I had expected a quieter room. I would probably choose somewhere else next time.', ['Why is the speaker unlikely to return?', ['The location was inconvenient', 'The staff were rude', 'The conference was cancelled', 'The noise did not match the price paid'], 3]),
+  listening(408, 'B2', 'We can launch in June provided the testing phase goes smoothly. If serious problems emerge, I would rather delay the release than compromise on quality, even though sales have already planned the campaign.', ['What determines whether the June launch happens?', ['The outcome of testing', 'The number of advertisements', 'A new sales team', 'A price reduction'], 0]),
+  choice(501, 'C1', 'Grammar', ['Had the warning been taken seriously, the disruption ___ avoided.', ['will have been', 'would have been', 'would be', 'had been'], 1]),
+  choice(502, 'C1', 'Grammar', ['The proposal is unlikely to succeed, ___ attractive it may appear at first.', ['although', 'despite', 'however', 'whereas'], 2]),
+  choice(503, 'C1', 'Vocabulary', ['The committee gave its ___ approval: the plan can proceed only if the safety concerns are resolved.', ['unconditional', 'retrospective', 'unanimous', 'conditional'], 3]),
+  choice(504, 'C1', 'Vocabulary', ['Her comments were intended to ___ the criticism, not to deny that mistakes had been made.', ['temper', 'entail', 'constitute', 'preclude'], 0]),
+  choice(505, 'C1', 'Reading', ['“Supporters cite rising participation as proof that the policy works. Yet participation alone tells us little about who benefits or whether gains persist. This does not invalidate the policy; it weakens the certainty with which its success is proclaimed.” What is the writer’s position?', ['The policy has definitely failed', 'Participation figures should be ignored', 'Claims of success exceed the evidence available', 'The benefits are proven to be permanent'], 2]),
+  choice(506, 'C1', 'Reading', ['“Automating routine decisions is often presented as a way of removing human bias. But the choice of what to measure, and whose past decisions to treat as a model, remains human. The apparent neutrality of the output can make those choices harder to question.” What is implied?', ['Automation removes every value judgement', 'Bias can persist while becoming less visible', 'Past decisions are always reliable', 'Routine decisions cannot be automated'], 1]),
+  listening(507, 'C1', 'I would not dispute that the reform has made the process faster. Whether speed is the right measure of success is another matter. Cases requiring careful judgement may now receive less attention than they warrant.', ['What reservation does the speaker express?', ['Faster processing may come at the expense of careful judgement', 'The reform has made processing slower', 'Every case now receives too much attention', 'Speed cannot be measured'], 0]),
+  listening(508, 'C1', 'The findings are promising, but the sample was drawn entirely from volunteers already interested in the programme. Before extending the conclusions to the wider population, we need to account for that selection effect.', ['Why should the findings be interpreted cautiously?', ['The programme has no volunteers', 'The results were not recorded', 'The sample was too geographically diverse', 'The participants may not represent the wider population'], 3]),
+];
