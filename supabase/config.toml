@@ -1,43 +1,25 @@
 project_id = "lpubmruxqwwkusinpnyd"
 
-[functions.process-email-queue]
-verify_jwt = true
-
-[functions.send-transactional-email]
-verify_jwt = false
-
-[functions.preview-transactional-email]
-verify_jwt = false
-
-[functions.handle-email-unsubscribe]
-verify_jwt = false
-
-[functions.handle-email-suppression]
-verify_jwt = false
-
-[functions.submit-lead]
-verify_jwt = false
-
-[functions.complete-test]
-verify_jwt = false
-
-[functions.whatsapp-webhook]
-verify_jwt = false
-
-[functions.mailchimp-admin]
-verify_jwt = false
-
-[functions.mailchimp-sync-lead]
-verify_jwt = false
-[functions.transcribe-audio]
-verify_jwt = false
-
-[functions.text-to-speech]
-verify_jwt = false
-
-[functions.phone-verify-start]
-verify_jwt = false
-
-[functions.phone-verify-check]
-verify_jwt = false
-
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.complete-test]
+    verify_jwt = false
+  [functions.mailchimp-admin]
+    verify_jwt = false
+  [functions.mailchimp-sync-lead]
+    verify_jwt = false
+  [functions.phone-verify-check]
+    verify_jwt = false
+  [functions.phone-verify-start]
+    verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.submit-lead]
+    verify_jwt = false
+  [functions.text-to-speech]
+    verify_jwt = false
+  [functions.transcribe-audio]
+    verify_jwt = false
+  [functions.whatsapp-webhook]
+    verify_jwt = false
