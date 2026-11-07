@@ -1,7 +1,7 @@
 # Tasks
 
-- [ ] Improve question coverage and introduce adaptive difficulty with honest placement results.
-- [ ] Verify adaptive paths, scoring, and desktop/mobile test completion without changing lead delivery.
+- [x] Improve question coverage and introduce adaptive difficulty with honest placement results.
+- [x] Verify adaptive routing and scoring with 8 focused tests; 25 tests passed overall. Desktop/mobile completion with audio-unavailable fallback passed without overflow. Live audio and verified-phone lead/CRM completion were not exercised; calibration against teacher assessments remains outside this implementation.
 
 - [x] Update email delivery, preserve contents and recipients, and retain audit data.
 - [x] Replace legacy outcome handlers, validate and deploy replacements without publishing.

@@ -34,7 +34,6 @@ export function estimateAbility(responses: AdaptiveResponse[]) {
 export function nextAdaptiveQuestion(responses: AdaptiveResponse[], bank: Question[] = adaptiveBank): Question | undefined {
   if (responses.length >= ADAPTIVE_MAX) return undefined;
   const counts = Object.fromEntries(TEST_SKILLS.map(skill => [skill, responses.filter(r => r.skill === skill).length]));
-  const minimum = Math.min(...Object.values(counts));
   const availableSkills = TEST_SKILLS.filter(skill => bank.some(q => q.skill === skill && !responses.some(r => r.id === q.id)));
   const skill = availableSkills.sort((a, b) => counts[a] - counts[b])[0];
   const { mean } = estimateAbility(responses);
