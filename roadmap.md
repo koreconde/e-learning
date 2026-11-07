@@ -1,5 +1,8 @@
 # Tasks
 
+- [x] Include a level-matched speaking task after receptive completion or timeout; recorded/written/skipped outcome appears in results without changing CEFR scoring.
+- [x] Verify test-to-speaking-to-results flow with real example audio, recorded speech and hosted transcription at 320px, 390px and desktop; 36 tests passed, including permission denial and cleanup. Physical iOS/Android and in-app browser checks remain unavailable without actual devices; lead and CRM flows untouched.
+
 - [x] Fix binary listening playback and tap-driven mobile-safe controls; all 14 listening recordings decoded successfully and real playback passed.
 - [x] Harden microphone recording and verify real transcription and confirmation at 320px, 390px and desktop; cleanup and permission tests passed; 32 tests passed overall.
 - [x] Clarify speaking availability: adaptive assessment currently excludes it; no scoring or question-bank change made. Physical Safari/Chrome and in-app browser checks need actual devices and remain unverified.

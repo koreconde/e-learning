@@ -56,6 +56,11 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           </p>
           <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">Stima orientativa, non una certificazione. Speaking e Writing richiedono una valutazione con un docente.</p>
           {result.confidence === 'limited' && <p className="mt-2 text-sm text-muted-foreground">Evidenza limitata: il livello va confermato con un docente.</p>}
+          {result.speaking && <div className="mx-auto mt-6 max-w-xl border-t border-border pt-4 text-left">
+            <p className="font-semibold text-foreground">Speaking · {result.speaking.status === 'recorded' ? 'Risposta vocale completata' : result.speaking.status === 'written' ? 'Risposta scritta, non vocale' : 'Prova saltata'}</p>
+            {result.speaking.transcript && <p className="mt-2 break-words text-sm text-muted-foreground">“{result.speaking.transcript}”</p>}
+            <p className="mt-2 text-sm text-muted-foreground">Pronuncia e fluidità da valutare con un docente; questa prova non modifica il livello indicativo.</p>
+          </div>}
         </motion.div>
 
         {/* CEFR Ladder */}

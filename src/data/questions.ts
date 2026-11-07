@@ -298,6 +298,7 @@ export interface Result {
   description: string;
   confidence?: 'limited' | 'moderate';
   skills?: { skill: string; correct: number; total: number }[];
+  speaking?: { status: 'recorded' | 'written' | 'skipped'; transcript: string };
 }
 
 export function calculateLevel(correctIds: number[]): Result {

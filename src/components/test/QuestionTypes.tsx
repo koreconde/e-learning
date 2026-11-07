@@ -277,9 +277,10 @@ export const WritingView = ({
 };
 
 /* ============ SPEAKING ============ */
-export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked }: {
+export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked, onInputMode }: {
   q: SpeakingQ; transcript: string; onChange: (v: string) => void;
   onSubmit: () => void; locked: boolean;
+  onInputMode?: (mode: "recorded" | "written") => void;
 }) => {
   const [state, setState] = useState<"idle" | "permission" | "recording" | "transcribing">("idle");
   const [error, setError] = useState("");
@@ -368,6 +369,7 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked }: {
         }
       };
       recorder.start();
+      onInputMode?.("recorded");
       onChangeRef.current("");
       setState("recording");
       timerRef.current = setTimeout(stop, 15000);
@@ -395,7 +397,7 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked }: {
         </>}
         {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
         {!canRecord && <p className="text-sm text-muted-foreground">Microfono non disponibile in questo browser. Apri il link in Safari o Chrome.</p>}
-        {!textFallback && <Button variant="outline" className="mt-4 min-h-11 whitespace-normal" disabled={state !== "idle" || locked} onClick={() => setTextFallback(true)}>Scrivi la risposta invece</Button>}
+        {!textFallback && <Button variant="outline" className="mt-4 min-h-11 whitespace-normal" disabled={state !== "idle" || locked} onClick={() => { setTextFallback(true); onChange(""); onInputMode?.("written"); }}>Scrivi la risposta invece</Button>}
         {textFallback && <Input aria-label="Risposta scritta" value={transcript} disabled={locked} onChange={(event) => onChange(event.target.value)} placeholder="Write your answer in English…" className="mt-4 h-12 text-base" />}
         {!textFallback && transcript && <p className="mt-4 break-words text-foreground">Hai detto: “{transcript}”</p>}
         {transcript.trim() && state === "idle" && <Button onClick={onSubmit} disabled={locked} className="mt-4 min-h-11">Conferma risposta</Button>}
