@@ -49,6 +49,12 @@ describe('adaptive placement', () => {
     expect(adaptiveResult([{id: 5, correct: false, skill: 'Grammar'}]).confidence).toBe('limited');
     expect(shouldFinishAdaptive([])).toBe(false);
   });
+  it('does not claim adequate evidence when audio is replaced by reading', () => {
+    const responses = simulate(true).map(r => ({...r, skill: r.skill === 'Listening' ? 'Reading' as const : r.skill}));
+    expect(adaptiveResult(responses).confidence).toBe('limited');
+    expect(shouldFinishAdaptive(responses.slice(0,16))).toBe(false);
+    expect(nextAdaptiveQuestion(responses.slice(0,16))).toBeDefined();
+  });
   it('has unique identifiers and complete skill coverage at every band', () => {
     expect(new Set(adaptiveBank.map(q => q.id)).size).toBe(adaptiveBank.length);
     for (const level of ['A1','A2','B1','B2','C1']) for (const skill of ['Grammar','Vocabulary','Reading','Listening']) {

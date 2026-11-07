@@ -195,6 +195,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
       case "listening":
         return (
           <ListeningView
+            key={q.id}
             q={q}
             selected={typeof draft === "number" ? draft : null}
             onSelect={handleOptionSelect}

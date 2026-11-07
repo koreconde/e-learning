@@ -35,7 +35,8 @@ export function nextAdaptiveQuestion(responses: AdaptiveResponse[], bank: Questi
   if (responses.length >= ADAPTIVE_MAX) return undefined;
   const counts = Object.fromEntries(TEST_SKILLS.map(skill => [skill, responses.filter(r => r.skill === skill).length]));
   const minimum = Math.min(...Object.values(counts));
-  const skill = TEST_SKILLS.find(skill => counts[skill] === minimum);
+  const availableSkills = TEST_SKILLS.filter(skill => bank.some(q => q.skill === skill && !responses.some(r => r.id === q.id)));
+  const skill = availableSkills.sort((a, b) => counts[a] - counts[b])[0];
   const { mean } = estimateAbility(responses);
   const available = bank.filter(q => q.skill === skill && !responses.some(r => r.id === q.id));
   return available.sort((a, b) => Math.abs(levels.indexOf(a.level) - mean) - Math.abs(levels.indexOf(b.level) - mean))[0];
@@ -55,7 +56,8 @@ export function adaptiveResult(responses: AdaptiveResponse[]): Result {
   const demonstrated = responses.filter(r => r.correct).map(r => adaptiveBank.find(q => q.id === r.id)).filter((q): q is Question => !!q);
   const highest = Math.max(0, ...demonstrated.map(q => levels.indexOf(q.level)));
   const level = levels[Math.min(index, highest)];
-  const confidence = responses.length < ADAPTIVE_MIN ? 'limited' : deviation <= 0.55 ? 'moderate' : 'limited';
+  const coverage = TEST_SKILLS.every(skill => responses.filter(r => r.skill === skill).length >= 3);
+  const confidence = responses.length < ADAPTIVE_MIN || !coverage ? 'limited' : deviation <= 0.55 ? 'moderate' : 'limited';
   const descriptions: Record<CEFRLevel, string> = {
     A1: 'Le risposte suggeriscono di consolidare le basi: frasi quotidiane, lessico essenziale e brevi messaggi.',
     A2: 'Le risposte suggeriscono una base per comprendere situazioni familiari. Il prossimo passo è affrontare messaggi più articolati.',
