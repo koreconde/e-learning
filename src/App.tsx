@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import Unsubscribe from "./pages/Unsubscribe.tsx";
 import AdminAuth from "./pages/AdminAuth.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
 import AdminCampaigns from "./pages/AdminCampaigns.tsx";
@@ -40,7 +39,6 @@ const App = () => (
               />
             }
           />
-          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/admin/auth" element={<AdminAuth />} />
           <Route
             path="/admin"
