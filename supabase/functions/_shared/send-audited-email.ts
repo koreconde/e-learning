@@ -1,10 +1,10 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { EmailAPIError } from 'npm:@lovable.dev/email-js@0.5.0'
 import { sendTemplateEmail, type SendTemplateEmailOptions } from './transactional-email-templates/send-email.ts'
 import { sendAuditRow } from './email-audit.ts'
 
 export async function sendAuditedEmail(
-  client: ReturnType<typeof createClient>,
+  client: SupabaseClient,
   template: string,
   recipient: string,
   options: SendTemplateEmailOptions,

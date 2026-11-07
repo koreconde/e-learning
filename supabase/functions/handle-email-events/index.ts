@@ -24,8 +24,10 @@ async function recordOutcome(event: { event_id: string; data: { recipient: strin
   if (logError) throw logError
 }
 
+const apiKey = Deno.env.get('LOVABLE_API_KEY')
+if (!apiKey) throw new Error('Missing email webhook configuration')
 const handler = createEmailWebhookHandler({
-  apiKey: Deno.env.get('LOVABLE_API_KEY')!,
+  apiKey,
   on: {
     // Placeholder handlers — replace each log with the feature's reaction.
     // Throw on failure so the delivery is retried.

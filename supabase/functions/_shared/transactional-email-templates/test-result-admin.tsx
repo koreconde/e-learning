@@ -34,7 +34,7 @@ const TestResultAdminEmail = ({
 }: TestResultAdminProps) => (
   <Html lang="it" dir="ltr">
     <Head />
-    <Preview>Nuovo lead: {name} — livello {level} ({score}/{total})</Preview>
+    <Preview>{`Nuovo lead: ${name} — livello ${level} (${score}/${total})`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Nuovo lead test inglese</Heading>
