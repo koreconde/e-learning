@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Run daily monitoring through a token-protected scheduled function with a database lease, per-day persisted checks, deterministic alert keys and persisted AI pause state; never create synthetic leads or send verification codes.
+
 - Dispatch EscapeVision from submit-lead only after a successful database save, alongside existing background tasks, so navigation and test completion cannot duplicate or block delivery.
 - Keep runtime-neutral CRM helpers in supabase/functions/_shared and re-export through src/lib so function deployment includes them and browser/server validation stays consistent.
 - Send app emails from their feature functions through the managed helper with attempt-derived idempotency keys; retain legacy audit tables only as notification copies, never send gates.
