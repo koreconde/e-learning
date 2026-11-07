@@ -190,7 +190,6 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
             selected={typeof draft === "number" ? draft : null}
             onSelect={handleOptionSelect}
             locked={locked}
-            onTextReveal={() => setTextAssisted(true)}
           />
         );
       case "listening":
@@ -200,6 +199,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
             selected={typeof draft === "number" ? draft : null}
             onSelect={handleOptionSelect}
             locked={locked}
+            onTextReveal={() => setTextAssisted(true)}
           />
         );
       case "fill-blank":
