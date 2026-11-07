@@ -1,7 +1,7 @@
 # Tasks
 
-- [ ] Review readiness for publication, with explicit limits on real-device and lead-delivery verification.
-- [ ] Add daily website, recent-error, audio and transcription monitoring; notify raff@escapecampus.it on failures, without test leads or WhatsApp messages.
+- [x] Review publication readiness: 39 tests pass, latest build OK and basic security scan reports no findings. Real-device and full lead/CRM verification remain unverified; publishing was not requested directly and was not performed.
+- [x] Activate daily monitoring at 07:23 UTC for website reachability, database reads, Twilio service access, recent email failures and real example audio/transcription. First run passed all five checks. Failure-only alerts configured for raff@escapecampus.it; actual alert delivery has not been exercised because no failure occurred. No synthetic leads or WhatsApp codes sent.
 
 - [x] Include a level-matched speaking task after receptive completion or timeout; recorded/written/skipped outcome appears in results without changing CEFR scoring.
 - [x] Verify test-to-speaking-to-results flow with real example audio, recorded speech and hosted transcription at 320px, 390px and desktop; 36 tests passed, including permission denial and cleanup. Physical iOS/Android and in-app browser checks remain unavailable without actual devices; lead and CRM flows untouched.
