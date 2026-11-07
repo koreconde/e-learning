@@ -1,5 +1,9 @@
 # Tasks
 
+- [ ] Fix and verify real listening playback and mobile-safe audio controls.
+- [ ] Harden microphone recording and verify transcription, fallback and cleanup.
+- [ ] Report mobile device verification limits and clarify speaking availability in the adaptive test.
+
 - [x] Improve question coverage and introduce adaptive difficulty with honest placement results.
 - [x] Verify adaptive routing and scoring with 8 focused tests; 25 tests passed overall. Desktop/mobile completion with audio-unavailable fallback passed without overflow. Live audio and verified-phone lead/CRM completion were not exercised; calibration against teacher assessments remains outside this implementation.
 
