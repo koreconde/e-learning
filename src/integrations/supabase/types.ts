@@ -116,6 +116,51 @@ export type Database = {
         }
         Relationships: []
       }
+      health_monitor_config: {
+        Row: {
+          ai_paused: boolean
+          id: boolean
+          pause_reason: string | null
+          token: string
+        }
+        Insert: {
+          ai_paused?: boolean
+          id?: boolean
+          pause_reason?: string | null
+          token?: string
+        }
+        Update: {
+          ai_paused?: boolean
+          id?: boolean
+          pause_reason?: string | null
+          token?: string
+        }
+        Relationships: []
+      }
+      health_monitor_runs: {
+        Row: {
+          alert_status: string | null
+          checks: Json
+          completed_at: string | null
+          day: string
+          lease_until: string
+        }
+        Insert: {
+          alert_status?: string | null
+          checks?: Json
+          completed_at?: string | null
+          day: string
+          lease_until: string
+        }
+        Update: {
+          alert_status?: string | null
+          checks?: Json
+          completed_at?: string | null
+          day?: string
+          lease_until?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assigned_to: string | null
@@ -310,6 +355,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_health_monitor: { Args: { p_day: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
