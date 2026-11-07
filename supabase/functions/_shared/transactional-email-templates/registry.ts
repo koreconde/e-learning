@@ -12,8 +12,10 @@ export interface TemplateEntry {
 import { template as testResultLead } from './test-result-lead.tsx'
 import { template as testResultAdmin } from './test-result-admin.tsx'
 import { template as newLeadAdmin } from './new-lead-admin.tsx'
+import { template as healthAlert } from './health-alert.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'health-alert': healthAlert,
   'test-result-lead': testResultLead,
   'test-result-admin': testResultAdmin,
   'new-lead-admin': newLeadAdmin,
