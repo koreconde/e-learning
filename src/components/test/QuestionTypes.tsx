@@ -41,11 +41,13 @@ export const ListeningView = ({
   selected,
   onSelect,
   locked,
+  onTextReveal,
 }: {
   q: ListeningQ;
   selected: number | null;
   onSelect: (i: number) => void;
   locked: boolean;
+  onTextReveal?: () => void;
 }) => {
   const [played, setPlayed] = useState(0);
   const [speaking, setSpeaking] = useState(false);
@@ -53,6 +55,8 @@ export const ListeningView = ({
   const [failed, setFailed] = useState(false);
   const [showText, setShowText] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => { if (showText) onTextReveal?.(); }, [showText, onTextReveal]);
 
   const getAudioUrl = async (): Promise<string> => {
     const cached = ttsCache.get(q.id as unknown as string);

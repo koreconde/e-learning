@@ -34,7 +34,7 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
             Complimenti{name ? `, ${name.split(" ")[0]}` : ""}
           </div>
           <h1 className="font-display text-4xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-6xl">
-            Il tuo livello di inglese è
+            Il tuo livello indicativo
           </h1>
 
           <motion.div
@@ -54,6 +54,8 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           <p className="mt-6 text-muted-foreground">
             Basato su <span className="font-semibold text-foreground">{result.score}</span> risposte corrette su {result.total}
           </p>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">Stima orientativa, non una certificazione. Speaking e Writing richiedono una valutazione con un docente.</p>
+          {result.confidence === 'limited' && <p className="mt-2 text-sm text-muted-foreground">Evidenza limitata: il livello va confermato con un docente.</p>}
         </motion.div>
 
         {/* CEFR Ladder */}
@@ -83,6 +85,8 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
             );
           })}
         </motion.div>
+
+        {result.skills && <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">{result.skills.map(s => <div key={s.skill} className="border-b border-border py-4 text-center"><p className="text-sm text-muted-foreground">{s.skill}</p><p className="mt-2 text-xl font-semibold text-foreground">{s.correct} / {s.total}</p></div>)}</div>}
 
         {/* Description */}
         <motion.div

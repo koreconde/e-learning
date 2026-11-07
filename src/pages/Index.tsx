@@ -10,7 +10,7 @@ import { ContactGate, type ContactChoice } from "@/components/landing/ContactGat
 import { TestRunner } from "@/components/test/TestRunner";
 import type { AnsweredQuestion } from "@/components/test/TestRunner";
 import { ResultPage } from "@/components/test/ResultPage";
-import { calculateLevel, type Result } from "@/data/questions";
+import { type Result } from "@/data/questions";
 import { fbqTrack, ttqTrack, ttqIdentify } from "@/lib/fpixel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -107,8 +107,7 @@ const Index = () => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
 
-  const handleTestFinish = async (correctIds: number[], details: AnsweredQuestion[]) => {
-    const r = calculateLevel(correctIds);
+  const handleTestFinish = async (r: Result, details: AnsweredQuestion[]) => {
     setResult(r);
     fbqTrack("CompleteRegistration", {
       content_name: "English Test Completed",

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, SkipForward } from "lucide-react";
-import { questions, isAnswerCorrect } from "@/data/questions";
-import type { Question } from "@/data/questions";
+import { isAnswerCorrect } from "@/data/questions";
+import type { Question, Result } from "@/data/questions";
+import { ADAPTIVE_MAX, adaptiveResult, nextAdaptiveQuestion, shouldFinishAdaptive, type AdaptiveResponse, type TestedSkill } from "@/lib/adaptive-test";
+import { Button } from "@/components/ui/button";
 import {
   MultipleChoiceView,
   ListeningView,
@@ -23,7 +25,7 @@ export interface AnsweredQuestion {
 }
 
 interface TestRunnerProps {
-  onFinish: (correctIds: number[], details: AnsweredQuestion[]) => void;
+  onFinish: (result: Result, details: AnsweredQuestion[]) => void;
 }
 
 const TOTAL_SECONDS = 12 * 60; // a bit more time for written/spoken tasks
@@ -78,24 +80,34 @@ function getCorrectAnswer(q: Question): string {
 
 export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answer[]>(() => questions.map(() => null));
+  const [responses, setResponses] = useState<AdaptiveResponse[]>([]);
+  const [details, setDetails] = useState<AnsweredQuestion[]>([]);
+  const [q, setQuestion] = useState(() => nextAdaptiveQuestion([]));
+  const completed = useRef(false);
+  const transitionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitLock = useRef(false);
+  const [textAssisted, setTextAssisted] = useState(false);
   const [draft, setDraft] = useState<Answer>(null);
   const [locked, setLocked] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
 
-  const q = questions[index];
-  const progress = ((index + 1) / questions.length) * 100;
+  const progress = (index / ADAPTIVE_MAX) * 100;
 
   // Reset draft when question changes
   useEffect(() => {
+    if (!q) return;
     setDraft(q.type === "reorder" ? [] : q.type === "multiple-choice" || q.type === "listening" ? null : "");
     setLocked(false);
-  }, [index, q.type]);
+    commitLock.current = false;
+    setTextAssisted(false);
+  }, [q]);
+
+  useEffect(() => () => { if (transitionRef.current) clearTimeout(transitionRef.current); }, []);
 
   // Timer
   useEffect(() => {
     if (secondsLeft <= 0) {
-      finishWith(answers);
+      finishWith(responses, details);
       return;
     }
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
@@ -105,7 +117,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
 
   // Keyboard shortcuts only for option-based questions
   useEffect(() => {
-    if (q.type !== "multiple-choice" && q.type !== "listening") return;
+    if (!q || (q.type !== "multiple-choice" && q.type !== "listening")) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
@@ -114,62 +126,53 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
         "1": 0, "2": 1, "3": 2, "4": 3,
         a: 0, b: 1, c: 2, d: 3,
       };
-      if (key in map) handleOptionSelect(map[key]);
+      if (key in map && !locked) setDraft(map[key]);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, locked]);
 
-  const finishWith = (final: Answer[]) => {
-    const correctIds: number[] = [];
-    const details: AnsweredQuestion[] = final.map((ans, i) => {
-      const q = questions[i];
-      const correct = isAnswerCorrect(q, ans);
-      if (correct) correctIds.push(q.id);
-      return {
-        questionNumber: i + 1,
-        level: q.level,
-        skill: q.skill,
-        prompt: getPrompt(q),
-        userAnswer: formatAnswer(q, ans),
-        correctAnswer: getCorrectAnswer(q),
-        correct,
-      };
-    });
-    onFinish(correctIds, details);
+  const finishWith = (final: AdaptiveResponse[], finalDetails: AnsweredQuestion[]) => {
+    if (completed.current) return;
+    completed.current = true;
+    if (transitionRef.current) clearTimeout(transitionRef.current);
+    onFinish(adaptiveResult(final), finalDetails);
   };
 
-  const advance = (newAnswers: Answer[]) => {
-    if (index === questions.length - 1) {
-      finishWith(newAnswers);
+  const advance = (next: AdaptiveResponse[], nextDetails: AnsweredQuestion[]) => {
+    const nextQuestion = nextAdaptiveQuestion(next);
+    if (shouldFinishAdaptive(next) || !nextQuestion) {
+      finishWith(next, nextDetails);
     } else {
       setIndex((i) => i + 1);
+      setQuestion(nextQuestion);
     }
   };
 
   const commit = (answer: Answer, autoAdvance = true) => {
-    const newAnswers = [...answers];
-    newAnswers[index] = answer;
-    setAnswers(newAnswers);
+    if (!q || commitLock.current || completed.current) return;
+    commitLock.current = true;
+    const correct = isAnswerCorrect(q, answer);
+    const skill = (textAssisted && q.skill === 'Listening' ? 'Reading' : q.skill) as TestedSkill;
+    const next = [...responses, { id: q.id, correct, skill }];
+    const nextDetails = [...details, { questionNumber: index + 1, level: q.level, skill, prompt: getPrompt(q), userAnswer: formatAnswer(q, answer), correctAnswer: getCorrectAnswer(q), correct }];
+    setResponses(next);
+    setDetails(nextDetails);
     setLocked(true);
     if (autoAdvance) {
-      setTimeout(() => advance(newAnswers), 350);
+      transitionRef.current = setTimeout(() => advance(next, nextDetails), 200);
     }
   };
 
   const handleOptionSelect = (i: number) => {
     if (locked) return;
     setDraft(i);
-    commit(i);
   };
 
   const handleSkip = () => {
     if (locked) return;
-    const newAnswers = [...answers];
-    newAnswers[index] = null;
-    setAnswers(newAnswers);
-    advance(newAnswers);
+    commit(null);
   };
 
   const mins = Math.floor(secondsLeft / 60);
@@ -178,6 +181,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const lowTime = secondsLeft < 60;
 
   const renderQuestion = () => {
+    if (!q) return null;
     switch (q.type) {
       case "multiple-choice":
         return (
@@ -186,6 +190,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
             selected={typeof draft === "number" ? draft : null}
             onSelect={handleOptionSelect}
             locked={locked}
+            onTextReveal={() => setTextAssisted(true)}
           />
         );
       case "listening":
@@ -244,8 +249,8 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
     Grammar: "bg-foreground text-background",
     Vocabulary: "bg-foreground text-background",
     Reading: "bg-foreground text-background",
-    Listening: "bg-brand-blue text-white",
-    Speaking: "bg-destructive text-white",
+    Listening: "bg-brand-blue text-primary-foreground",
+    Speaking: "bg-destructive text-destructive-foreground",
     Writing: "bg-accent text-foreground",
   };
 
@@ -255,7 +260,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
       <div className="sticky top-0 z-10 border-b border-border/60 bg-card/90 backdrop-blur">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
           <div className="text-sm font-medium text-muted-foreground">
-            Domanda <span className="text-primary font-bold">{index + 1}</span> di {questions.length}
+            Domanda <span className="text-primary font-bold">{index + 1}</span> · massimo {ADAPTIVE_MAX}
           </div>
           <div
             role="timer"
@@ -289,7 +294,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
         <div className="w-full max-w-3xl">
           <AnimatePresence mode="wait">
             <motion.div
-              key={q.id}
+              key={q?.id}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -24 }}
@@ -297,26 +302,29 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
             >
               <div className="mb-5 flex items-center gap-2 text-xs uppercase tracking-[0.25em]">
                 <span className="rounded-full bg-foreground px-3 py-1 font-bold text-background">
-                  {q.level}
+                  Test inglese
                 </span>
                 <span
-                  className={`rounded-full px-3 py-1 font-bold ${skillBadgeColor[q.skill] ?? "bg-secondary text-foreground"}`}
+                  className={`rounded-full px-3 py-1 font-bold ${skillBadgeColor[q?.skill ?? ''] ?? "bg-secondary text-foreground"}`}
                 >
-                  {q.skill}
+                  {textAssisted ? 'Reading' : q?.skill}
                 </span>
               </div>
 
               {renderQuestion()}
+              {(q?.type === 'multiple-choice' || q?.type === 'listening') && (
+                <Button className="mt-6" disabled={typeof draft !== 'number' || locked} onClick={() => commit(draft)}>Conferma risposta</Button>
+              )}
 
               <div className="mt-8 text-center">
-                <button
+                <Button variant="ghost"
                   onClick={handleSkip}
                   disabled={locked}
                   className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
                 >
                   <SkipForward className="h-3.5 w-3.5" />
                   Non lo so, salta
-                </button>
+                </Button>
               </div>
             </motion.div>
           </AnimatePresence>
