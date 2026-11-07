@@ -3,6 +3,13 @@ import { afterEach, expect, it, vi } from "vitest";
 import { TestRunner } from "@/components/test/TestRunner";
 import { adaptiveResult, type AdaptiveResponse } from "@/lib/adaptive-test";
 import { speakingQuestionFor } from "@/lib/speaking-test";
+import { createElement } from "react";
+
+vi.mock("framer-motion", () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+  motion: { div: ({ children, initial, animate, exit, transition, ...props }: Record<string, unknown>) => createElement("div", props, children as React.ReactNode) },
+}));
+vi.mock("@/components/test/ListeningAudio", () => ({ ListeningAudio: () => null }));
 
 vi.mock("@/lib/test-audio", () => ({ loadTestAudio: vi.fn(() => new Promise(() => {})) }));
 afterEach(() => { cleanup(); vi.useRealTimers(); });
