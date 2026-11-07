@@ -3,6 +3,7 @@ import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 import { sendLeadToEscapeVision } from "../_shared/escapevision.ts";
+import { sendAuditedEmail } from "../_shared/send-audited-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -295,7 +296,7 @@ Deno.serve(async (req) => {
     lead_score: scoring.score,
     lead_quality: scoring.quality,
   };
-  const idemBase = `${data.email}-${Date.now()}`;
+  const idemBase = leadToken;
 
   // Sync completa verso il CRM esterno
   const attribution = {
@@ -325,22 +326,14 @@ Deno.serve(async (req) => {
   }).catch((e) => console.error("crm sync failed", e));
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const emailPromise = Promise.all(
     admins.map((addr) =>
-      supabase.functions
-        .invoke("send-transactional-email", {
-          headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey },
-          body: {
-            templateName: "new-lead-admin",
-            recipientEmail: addr,
-            idempotencyKey: `newlead-${addr}-${idemBase}`,
-            templateData: adminPayload,
-          },
+      sendAuditedEmail(supabase, "new-lead-admin", addr, {
+          idempotencyKey: `new-lead-admin-${addr}-${idemBase}`,
+          templateData: adminPayload,
         })
         .then((res) => {
-          if (res.error) console.error("admin email error", addr, res.error);
-          else console.log("admin email queued", addr);
+          console.log("admin email outcome", { sent: res.sent });
         })
         .catch((e) => console.error("admin email exception", addr, e)),
     ),

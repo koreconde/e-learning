@@ -7,7 +7,7 @@ import { TEMPLATES } from './registry.ts'
 // expose sending to the browser.
 
 // Configuration baked in at scaffold time
-const SITE_NAME = "English Test"
+const SITE_NAME = "pixel-perfect-clone-40391"
 // SENDER_DOMAIN is the verified sender FQDN: a delegated subdomain (e.g., "notify.example.com"), or, on a
 // domain registered through Lovable, the domain itself or a name under it (e.g., "example.com", "app.example.com").
 // It MUST match the sender verified in Lovable's email setup.

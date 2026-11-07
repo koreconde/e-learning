@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
+import { sendAuditedEmail } from "../_shared/send-audited-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Errore nel salvataggio" }, 500);
   }
 
-  const idemBase = `${lead.email}-${Date.now()}`;
+  const idemBase = leadToken;
   const emailPayload = {
     name: lead.name,
     email: lead.email,
@@ -136,36 +137,22 @@ Deno.serve(async (req) => {
   }
 
   // Send result to lead
-  supabase.functions
-    .invoke("send-transactional-email", {
-      headers: invokeHeaders,
-      body: {
-        templateName: "test-result-lead",
-        recipientEmail: lead.email,
-        idempotencyKey: `lead-${idemBase}`,
-        templateData: emailPayload,
-      },
-    })
-    .then((res) => {
-      if (res.error) console.error("lead email error", res.error);
+  const leadEmailPromise = sendAuditedEmail(supabase, "test-result-lead", lead.email, {
+      idempotencyKey: `test-result-lead-${idemBase}`,
+      templateData: emailPayload,
     })
     .catch((e) => console.error("lead email exception", e));
+
+  // Keep the lead's send alive after returning the test result.
+  // @ts-ignore EdgeRuntime is supplied by the hosted runtime
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(leadEmailPromise);
 
   const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
   await Promise.all(
     admins.map((addr) =>
-      supabase.functions
-        .invoke("send-transactional-email", {
-          headers: invokeHeaders,
-          body: {
-            templateName: "test-result-admin",
-            recipientEmail: addr,
-            idempotencyKey: `admin-${addr}-${idemBase}`,
-            templateData: emailPayload,
-          },
-        })
-        .then((res) => {
-          if (res.error) console.error("admin result email error", addr, res.error);
+      sendAuditedEmail(supabase, "test-result-admin", addr, {
+          idempotencyKey: `test-result-admin-${addr}-${idemBase}`,
+          templateData: emailPayload,
         })
         .catch((e) => console.error("admin result email exception", addr, e)),
     ),
