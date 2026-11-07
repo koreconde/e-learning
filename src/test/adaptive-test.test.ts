@@ -14,7 +14,7 @@ function simulate(correct: boolean) {
 describe('adaptive placement', () => {
   it('raises difficulty after demonstrated correct answers', () => {
     const q = nextAdaptiveQuestion([]);
-    expect(q?.level).toBe('A2');
+    expect(q?.level).toBe('B1');
     const responses = simulate(true);
     expect(adaptiveBank.find(q => q.id === responses[8].id)?.level).toBe('C1');
     expect(adaptiveResult(responses).level).toBe('C1');
