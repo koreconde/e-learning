@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Volume2, Mic, Square, RotateCcw, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ListeningAudio } from "./ListeningAudio";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,126 +36,17 @@ export const MultipleChoiceView = ({
 );
 
 /* ============ LISTENING ============ */
-const ttsCache = new Map<string, string>();
-
-export const ListeningView = ({
-  q,
-  selected,
-  onSelect,
-  locked,
-  onTextReveal,
-}: {
-  q: ListeningQ;
-  selected: number | null;
-  onSelect: (i: number) => void;
-  locked: boolean;
-  onTextReveal?: () => void;
+export const ListeningView = ({ q, selected, onSelect, locked, onTextReveal }: {
+  q: ListeningQ; selected: number | null; onSelect: (i: number) => void;
+  locked: boolean; onTextReveal?: () => void;
 }) => {
-  const [played, setPlayed] = useState(0);
-  const [speaking, setSpeaking] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [showText, setShowText] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => { if (showText) onTextReveal?.(); }, [showText, onTextReveal]);
-
-  const getAudioUrl = async (): Promise<string> => {
-    const cached = ttsCache.get(q.id as unknown as string);
-    if (cached) return cached;
-    const { data, error } = await supabase.functions.invoke("text-to-speech", {
-      body: { text: q.audioText, voice: "nova" },
-    });
-    if (error) throw error;
-    const blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: "audio/mpeg" });
-    const url = URL.createObjectURL(blob);
-    ttsCache.set(q.id as unknown as string, url);
-    return url;
-  };
-
-  const speak = async () => {
-    try {
-      setFailed(false);
-      setLoading(true);
-      const url = await getAudioUrl();
-      setLoading(false);
-      if (!audioRef.current) audioRef.current = new Audio();
-      const audio = audioRef.current;
-      audio.src = url;
-      audio.currentTime = 0;
-      audio.onplay = () => setSpeaking(true);
-      audio.onended = () => setSpeaking(false);
-      audio.onerror = () => {
-        setSpeaking(false);
-        setFailed(true);
-        setShowText(true);
-      };
-      await audio.play();
-      setPlayed((p) => p + 1);
-    } catch (e) {
-      console.error("TTS error", e);
-      setLoading(false);
-      setSpeaking(false);
-      setFailed(true);
-      setShowText(true);
-    }
-  };
-
-  useEffect(() => {
-    setPlayed(0);
-    setSpeaking(false);
-    setFailed(false);
-    setShowText(false);
-    const t = window.setTimeout(() => { void speak(); }, 400);
-    return () => {
-      window.clearTimeout(t);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.id]);
-
   return (
     <>
-      <h2 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-foreground md:text-3xl">
-        {q.prompt}
-      </h2>
-      <div className="mt-6 flex items-center gap-4 rounded-2xl border-2 border-brand-blue/30 bg-brand-blue/5 p-5">
-        <button
-          onClick={() => void speak()}
-          disabled={loading}
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-blue text-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
-          aria-label="Riproduci audio"
-        >
-          {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Volume2 className="h-6 w-6" />}
-        </button>
-        <div className="text-sm text-muted-foreground">
-          <div className="font-semibold text-foreground">
-            {loading ? "Preparazione audio…" : speaking ? "Riproduzione in corso…" : "Ascolta l'audio"}
-          </div>
-          <div>
-            {failed
-              ? "Audio non disponibile — tocca di nuovo o leggi il testo qui sotto."
-              : `Riproduzioni: ${played} • Tocca per riascoltare`}
-          </div>
-        </div>
-      </div>
-      {!showText && (
-        <button
-          type="button"
-          onClick={() => setShowText(true)}
-          className="mt-3 text-sm font-semibold text-brand-blue underline underline-offset-4"
-        >
-          Non senti l'audio? Mostra il testo
-        </button>
-      )}
-      {showText && (
-        <div className="mt-3 rounded-2xl border-2 border-border bg-card p-4 text-base italic text-foreground">
-          “{q.audioText}”
-        </div>
-      )}
+      <h2 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">{q.prompt}</h2>
+      <ListeningAudio key={q.id} text={q.audioText} />
+      {!showText && <Button variant="link" className="mt-3 h-auto min-h-11 whitespace-normal px-0 text-left" onClick={() => { setShowText(true); onTextReveal?.(); }}>Non senti l'audio? Mostra il testo</Button>}
+      {showText && <div className="mt-3 rounded-lg border-2 border-border bg-card p-4 text-base italic text-foreground">“{q.audioText}”</div>}
       <OptionList options={q.options} selected={selected} onSelect={onSelect} locked={locked} />
     </>
   );
@@ -385,386 +278,129 @@ export const WritingView = ({
 };
 
 /* ============ SPEAKING ============ */
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: (e: { results: { transcript: string }[][] }) => void;
-  onerror: (e: { error?: string }) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-};
-
-export const SpeakingView = ({
-  q,
-  transcript,
-  onChange,
-  onSubmit,
-  locked,
-}: {
-  q: SpeakingQ;
-  transcript: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  locked: boolean;
+export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked }: {
+  q: SpeakingQ; transcript: string; onChange: (v: string) => void;
+  onSubmit: () => void; locked: boolean;
 }) => {
-  const [recording, setRecording] = useState(false);
-  const [supported, setSupported] = useState(true);
-  const [recogError, setRecogError] = useState<string | null>(null);
-  const [showTextFallback, setShowTextFallback] = useState(false);
-  const recogRef = useRef<SpeechRecognitionLike | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gotResultRef = useRef(false);
+  const [state, setState] = useState<"idle" | "permission" | "recording" | "transcribing">("idle");
+  const [error, setError] = useState("");
+  const [textFallback, setTextFallback] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeRef = useRef(true);
+  const busyRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const canRecord = typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
-  // Fallback universale: registrazione audio + trascrizione lato server
-  const [recorderActive, setRecorderActive] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
-  const [recorderError, setRecorderError] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-  const recorderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const canRecord =
-    typeof window !== "undefined" &&
-    typeof MediaRecorder !== "undefined" &&
-    !!navigator.mediaDevices?.getUserMedia;
-
-  // Detect in-app browsers (Instagram, Facebook, TikTok, LinkedIn) where
-  // the Web Speech API is unreliable even when the constructor exists.
-  const isInAppBrowser =
-    typeof navigator !== "undefined" &&
-    /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Twitter|Line|TikTok|LinkedInApp/i.test(navigator.userAgent);
-  const isIosChrome =
-    typeof navigator !== "undefined" && /CriOS/i.test(navigator.userAgent);
-
+  const release = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
   useEffect(() => {
-    setRecogError(null);
-    setShowTextFallback(false);
-    const w = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionLike;
-      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-    };
-    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR || isInAppBrowser) {
-      setSupported(false);
-      return;
-    }
-    const recog = new SR();
-    recog.lang = q.lang ?? "en-US";
-    recog.interimResults = false;
-    recog.continuous = false;
-    recog.onresult = (e) => {
-      const text = e.results[0]?.[0]?.transcript ?? "";
-      gotResultRef.current = true;
-      onChange(text);
-    };
-    recog.onerror = (e) => {
-      setRecording(false);
-      const code = e?.error ?? "error";
-      setRecogError(code);
-      // On permission/hardware errors, surface the text fallback automatically.
-      if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
-        setShowTextFallback(true);
-      }
-      if (code === "no-speech") {
-        // Non ha sentito nulla: mostriamo subito il fallback testo
-        setShowTextFallback(true);
-      }
-    };
-    recog.onend = () => {
-      setRecording(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      // Se finisce senza risultati né errore (tipico bug iOS Safari),
-      // offriamo subito il fallback testo.
-      if (!gotResultRef.current && !recogError) {
-        setShowTextFallback(true);
-      }
-    };
-    recogRef.current = recog;
+    activeRef.current = true;
     return () => {
-      try { recog.stop(); } catch { /* ignore */ }
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      activeRef.current = false;
+      const recorder = recorderRef.current;
+      if (recorder) {
+        recorder.onstop = null;
+        recorder.ondataavailable = null;
+        if (recorder.state !== "inactive") recorder.stop();
+      }
+      release();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.id]);
 
-  const playTarget = () => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(q.targetPhrase);
-    u.lang = q.lang ?? "en-US";
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+  const stop = () => {
+    const recorder = recorderRef.current;
+    if (recorder?.state === "recording") recorder.stop();
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
   };
 
-  const toggle = () => {
-    if (!recogRef.current) return;
-    if (recording) {
-      recogRef.current.stop();
-      setRecording(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    } else {
-      onChange("");
-      setRecogError(null);
-      gotResultRef.current = false;
-      try {
-        recogRef.current.start();
-        setRecording(true);
-        // Safety timeout: dopo 15s fermiamo da soli (iOS a volte non chiama onend)
-        timeoutRef.current = setTimeout(() => {
-          try { recogRef.current?.stop(); } catch { /* ignore */ }
-          setRecording(false);
-          if (!gotResultRef.current) setShowTextFallback(true);
-        }, 15000);
-      } catch {
-        setRecording(false);
-        setRecogError("start-failed");
-        setShowTextFallback(true);
-      }
-    }
-  };
-
-  const useTextFallback = !supported || showTextFallback;
-  const useRecorder = !supported && !showTextFallback && canRecord && !isInAppBrowser;
-
-  const blobToBase64 = (blob: Blob) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("read-failed"));
-      reader.onloadend = () => {
-        const result = String(reader.result ?? "");
-        resolve(result.split(",")[1] ?? "");
-      };
-      reader.readAsDataURL(blob);
-    });
-
-  const stopRecorder = () => {
-    try {
-      mediaRecorderRef.current?.stop();
-    } catch { /* ignore */ }
-    if (recorderTimeoutRef.current) {
-      clearTimeout(recorderTimeoutRef.current);
-      recorderTimeoutRef.current = null;
-    }
-    setRecorderActive(false);
-  };
-
-  const startRecorder = async () => {
-    setRecorderError(null);
-    onChange("");
+  const start = async () => {
+    if (busyRef.current || locked) return;
+    busyRef.current = true;
+    setError("");
+    setState("permission");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const preferred = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"];
-      const mimeType = preferred.find((t) => MediaRecorder.isTypeSupported?.(t));
-      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      if (!activeRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
+      streamRef.current = stream;
+      const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      recorderRef.current = recorder;
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
+      recorder.onerror = () => {
+        recorder.onstop = null;
+        if (recorder.state !== "inactive") recorder.stop();
+        release(); busyRef.current = false;
+        if (activeRef.current) { setError("Registrazione interrotta. Riprova."); setState("idle"); }
       };
-      rec.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const type = rec.mimeType || mimeType || "audio/webm";
-        const blob = new Blob(chunksRef.current, { type });
-        chunksRef.current = [];
-        if (blob.size < 1000) {
-          setRecorderError("Non ho sentito nulla, riprova o scrivi la risposta.");
-          return;
-        }
-        setTranscribing(true);
+      recorder.onstop = async () => {
+        release();
+        if (!activeRef.current) return;
+        const blob = new Blob(chunks, { type: recorder.mimeType || mime || "audio/webm" });
+        if (!blob.size) { setError("Registrazione vuota. Riprova."); setState("idle"); busyRef.current = false; return; }
+        setState("transcribing");
         try {
-          const audio = await blobToBase64(blob);
-          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
-            body: { audio, mimeType: type },
+          const audio = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error("Audio read failed"));
+            reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+            reader.readAsDataURL(blob);
           });
-          if (error) throw error;
-          const text = (data as { text?: string })?.text?.trim() ?? "";
-          if (!text) {
-            setRecorderError("Non sono riuscito a capire, riprova o scrivi la risposta.");
-          } else {
-            onChange(text);
-          }
-        } catch (err) {
-          console.error("transcribe error", err);
-          setRecorderError("Trascrizione non riuscita. Puoi scrivere la risposta.");
+          const { data, error: requestError } = await supabase.functions.invoke("transcribe-audio", { body: { audio, mimeType: blob.type } });
+          if (requestError) throw requestError;
+          if (!activeRef.current) return;
+          const text = (data as { text?: string })?.text?.trim();
+          if (text) onChangeRef.current(text);
+          else setError("Non ho riconosciuto parole. Riprova.");
+        } catch (cause) {
+          console.error("Transcription error", cause);
+          if (activeRef.current) setError("Trascrizione non disponibile. Riprova o scrivi la risposta.");
         } finally {
-          setTranscribing(false);
+          busyRef.current = false;
+          if (activeRef.current) setState("idle");
         }
       };
-      mediaRecorderRef.current = rec;
-      rec.start();
-      setRecorderActive(true);
-      recorderTimeoutRef.current = setTimeout(() => stopRecorder(), 15000);
-    } catch (err) {
-      console.error("mic error", err);
-      setRecorderError("Microfono non disponibile. Scrivi la risposta qui sotto.");
-      setShowTextFallback(true);
+      recorder.start();
+      onChangeRef.current("");
+      setState("recording");
+      timerRef.current = setTimeout(stop, 15000);
+    } catch (cause) {
+      release(); busyRef.current = false;
+      if (!activeRef.current) return;
+      const denied = cause instanceof DOMException && cause.name === "NotAllowedError";
+      setError(denied ? "Permesso microfono negato. Abilitalo nelle impostazioni del browser." : "Microfono non disponibile. Prova ad aprire il link in Safari o Chrome.");
+      setState("idle");
     }
   };
 
   return (
     <>
-      <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        Speaking
+      <div className="mb-4 text-xs font-semibold uppercase text-muted-foreground">Speaking</div>
+      <h2 className="font-display text-xl font-bold leading-snug text-foreground md:text-2xl">{q.prompt}</h2>
+      <p className="mt-4 break-words text-lg text-foreground">“{q.targetPhrase}”</p>
+      <ListeningAudio text={q.targetPhrase} label="Ascolta esempio" />
+      <div className="mt-6">
+        {!textFallback && canRecord && <>
+          <Button size="icon" variant={state === "recording" ? "destructive" : "default"} className="h-16 w-16 rounded-full" disabled={locked || state === "permission" || state === "transcribing"} onClick={() => state === "recording" ? stop() : void start()} aria-label={state === "recording" ? "Ferma registrazione" : "Registra risposta"}>
+            {state === "permission" || state === "transcribing" ? <Loader2 className="animate-spin" /> : state === "recording" ? <Square /> : <Mic />}
+          </Button>
+          <p role="status" className="mt-3 text-sm text-muted-foreground">{state === "permission" ? "In attesa del permesso microfono…" : state === "recording" ? "Registrazione in corso…" : state === "transcribing" ? "Sto trascrivendo…" : "Microfono pronto"}</p>
+        </>}
+        {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+        {!canRecord && <p className="text-sm text-muted-foreground">Microfono non disponibile in questo browser. Apri il link in Safari o Chrome.</p>}
+        {!textFallback && <Button variant="outline" className="mt-4 min-h-11 whitespace-normal" disabled={state !== "idle" || locked} onClick={() => setTextFallback(true)}>Scrivi la risposta invece</Button>}
+        {textFallback && <Input aria-label="Risposta scritta" value={transcript} disabled={locked} onChange={(event) => onChange(event.target.value)} placeholder="Write your answer in English…" className="mt-4 h-12 text-base" />}
+        {!textFallback && transcript && <p className="mt-4 break-words text-foreground">Hai detto: “{transcript}”</p>}
+        {transcript.trim() && state === "idle" && <Button onClick={onSubmit} disabled={locked} className="mt-4 min-h-11">Conferma risposta</Button>}
       </div>
-      <h2 className="font-display text-xl font-bold leading-snug tracking-[-0.02em] text-foreground md:text-2xl">
-        {q.prompt}
-      </h2>
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border-2 border-brand-blue/30 bg-brand-blue/5 p-4">
-        <button
-          onClick={playTarget}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-blue text-white"
-          aria-label="Ascolta esempio"
-        >
-          <Volume2 className="h-4 w-4" />
-        </button>
-        <p className="font-display text-lg font-semibold text-foreground md:text-xl">
-          "{q.targetPhrase}"
-        </p>
-      </div>
-
-      {useRecorder ? (
-        <div className="mt-6">
-          <motion.button
-            onClick={() => (recorderActive ? stopRecorder() : startRecorder())}
-            disabled={locked || transcribing}
-            animate={recorderActive ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-            transition={{ duration: 1, repeat: recorderActive ? Infinity : 0 }}
-            className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl transition disabled:opacity-50 ${
-              recorderActive ? "bg-destructive" : "bg-foreground hover:opacity-90"
-            }`}
-          >
-            {transcribing ? (
-              <Loader2 className="h-7 w-7 animate-spin" />
-            ) : recorderActive ? (
-              <Square className="h-7 w-7" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </motion.button>
-          <p className="mt-3 text-sm font-medium text-muted-foreground">
-            {transcribing
-              ? "Sto trascrivendo..."
-              : recorderActive
-                ? "Sto registrando... parla ora, poi tocca stop"
-                : "Tocca per registrare"}
-          </p>
-          {recorderError && (
-            <p className="mt-2 text-sm font-medium text-destructive">{recorderError}</p>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowTextFallback(true)}
-            className="mt-4 inline-flex h-10 items-center justify-center rounded-full border-2 border-border bg-card px-5 text-xs font-bold uppercase tracking-wide text-foreground hover:bg-muted"
-          >
-            ⌨️ Scrivi la risposta invece
-          </button>
-          {transcript && (
-            <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Hai detto:
-              </div>
-              <div className="mt-1 text-base text-foreground">"{transcript}"</div>
-            </div>
-          )}
-          {transcript && !recorderActive && !transcribing && (
-            <button
-              onClick={onSubmit}
-              disabled={locked}
-              className="mt-4 inline-flex h-12 items-center justify-center rounded-full bg-foreground px-8 text-sm font-bold uppercase tracking-wide text-background transition hover:opacity-90 disabled:opacity-40"
-            >
-              Conferma →
-            </button>
-          )}
-        </div>
-      ) : useTextFallback ? (
-        <div className="mt-6 rounded-2xl border-2 border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
-          {isInAppBrowser ? (
-            <>
-              Il browser in-app (Instagram/Facebook) non supporta il microfono.
-              Per registrare la voce apri il link in <strong>Safari</strong> o{" "}
-              <strong>Chrome</strong>. In alternativa scrivi qui sotto la frase che
-              avresti pronunciato:
-            </>
-          ) : isIosChrome ? (
-            <>
-              Chrome su iPhone non supporta il riconoscimento vocale dentro il browser.
-              Puoi completare il test scrivendo qui sotto la frase che avresti pronunciato:
-            </>
-          ) : recogError === "not-allowed" || recogError === "service-not-allowed" ? (
-            <>
-              Permesso microfono negato. Abilita il microfono nelle impostazioni del
-              browser, oppure scrivi qui sotto la frase:
-            </>
-          ) : recogError === "audio-capture" ? (
-            <>Nessun microfono rilevato. Scrivi qui sotto la frase:</>
-          ) : recogError ? (
-            <>Riconoscimento vocale non disponibile. Scrivi qui sotto la frase:</>
-          ) : (
-            <>Il tuo browser non supporta il riconoscimento vocale. Scrivi qui sotto cosa hai pronunciato:</>
-          )}
-          <Input
-            value={transcript}
-            disabled={locked}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="Type what you said..."
-            className="mt-3 h-12 rounded-xl border-2 border-border bg-background"
-          />
-          <button
-            onClick={onSubmit}
-            disabled={!transcript.trim() || locked}
-            className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-bold uppercase tracking-wide text-background disabled:opacity-40"
-          >
-            Conferma
-          </button>
-        </div>
-      ) : (
-        <div className="mt-6">
-          <motion.button
-            onClick={toggle}
-            disabled={locked}
-            animate={recording ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-            transition={{ duration: 1, repeat: recording ? Infinity : 0 }}
-            className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl transition ${
-              recording ? "bg-destructive" : "bg-foreground hover:opacity-90"
-            }`}
-          >
-            {recording ? <Square className="h-7 w-7" /> : <Mic className="h-8 w-8" />}
-          </motion.button>
-          <p className="mt-3 text-sm font-medium text-muted-foreground">
-            {recording ? "Sto ascoltando... parla ora" : "Tocca per registrare"}
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowTextFallback(true)}
-            className="mt-4 inline-flex h-10 items-center justify-center rounded-full border-2 border-border bg-card px-5 text-xs font-bold uppercase tracking-wide text-foreground hover:bg-muted"
-          >
-            ⌨️ Scrivi la risposta invece
-          </button>
-          {transcript && (
-            <div className="mt-4 rounded-2xl border-2 border-border bg-card p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Hai detto:
-              </div>
-              <div className="mt-1 text-base text-foreground">"{transcript}"</div>
-            </div>
-          )}
-          {transcript && !recording && (
-            <button
-              onClick={onSubmit}
-              disabled={locked}
-              className="mt-4 inline-flex h-12 items-center justify-center rounded-full bg-foreground px-8 text-sm font-bold uppercase tracking-wide text-background transition hover:opacity-90 disabled:opacity-40"
-            >
-              Conferma →
-            </button>
-          )}
-        </div>
-      )}
     </>
   );
 };
