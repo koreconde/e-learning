@@ -296,6 +296,8 @@ export interface Result {
   score: number;
   total: number;
   description: string;
+  confidence?: 'limited' | 'moderate';
+  skills?: { skill: string; correct: number; total: number }[];
 }
 
 export function calculateLevel(correctIds: number[]): Result {
