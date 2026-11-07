@@ -5,5 +5,6 @@
 - Send app emails from their feature functions through the managed helper with attempt-derived idempotency keys; retain legacy audit tables only as notification copies, never send gates.
 - Deduplicate signed email outcome notifications by a deterministic event-derived audit row ID so retries cannot append duplicate records.
 - Route the English screener through a balanced adaptive receptive-skill bank with provisional Bayesian estimates; productive skills are teacher-assessed, not inferred from word count or copied transcripts.
+- Always append a level-matched speaking task after adaptive completion or timeout; keep its recorded/written/skipped outcome separate from receptive-skill scoring.
 - Fetch test audio as binary blobs, preload without autoplay, and invoke playback directly from a tap to preserve mobile browser user activation.
 - Use complete MediaRecorder files for speaking transcription and release microphone tracks on every exit so voice input does not depend on Web Speech availability.

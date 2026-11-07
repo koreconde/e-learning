@@ -5,6 +5,7 @@ import { isAnswerCorrect } from "@/data/questions";
 import type { Question, Result } from "@/data/questions";
 import { ADAPTIVE_MAX, adaptiveResult, nextAdaptiveQuestion, shouldFinishAdaptive, type AdaptiveResponse, type TestedSkill } from "@/lib/adaptive-test";
 import { Button } from "@/components/ui/button";
+import { speakingQuestionFor, type SpeakingAttempt } from "@/lib/speaking-test";
 import {
   MultipleChoiceView,
   ListeningView,
@@ -90,8 +91,10 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const [draft, setDraft] = useState<Answer>(null);
   const [locked, setLocked] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
+  const [speakingPhase, setSpeakingPhase] = useState(false);
+  const speakingMode = useRef<"recorded" | "written">("recorded");
 
-  const progress = (index / ADAPTIVE_MAX) * 100;
+  const progress = speakingPhase ? 96 : (index / (ADAPTIVE_MAX + 1)) * 100;
 
   // Reset draft when question changes
   useEffect(() => {
@@ -106,14 +109,15 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
 
   // Timer
   useEffect(() => {
+    if (speakingPhase) return;
     if (secondsLeft <= 0) {
-      finishWith(responses, details);
+      beginSpeaking(responses);
       return;
     }
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secondsLeft]);
+  }, [secondsLeft, speakingPhase]);
 
   // Keyboard shortcuts only for option-based questions
   useEffect(() => {
@@ -133,17 +137,24 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, locked]);
 
-  const finishWith = (final: AdaptiveResponse[], finalDetails: AnsweredQuestion[]) => {
+  const finishWith = (final: AdaptiveResponse[], finalDetails: AnsweredQuestion[], speaking?: SpeakingAttempt) => {
     if (completed.current) return;
     completed.current = true;
     if (transitionRef.current) clearTimeout(transitionRef.current);
-    onFinish(adaptiveResult(final), finalDetails);
+    onFinish({ ...adaptiveResult(final), speaking }, finalDetails);
+  };
+
+  const beginSpeaking = (final: AdaptiveResponse[]) => {
+    if (transitionRef.current) clearTimeout(transitionRef.current);
+    setIndex(final.length);
+    setSpeakingPhase(true);
+    setQuestion(speakingQuestionFor(adaptiveResult(final).level));
   };
 
   const advance = (next: AdaptiveResponse[], nextDetails: AnsweredQuestion[]) => {
     const nextQuestion = nextAdaptiveQuestion(next);
     if (shouldFinishAdaptive(next) || !nextQuestion) {
-      finishWith(next, nextDetails);
+      beginSpeaking(next);
     } else {
       setIndex((i) => i + 1);
       setQuestion(nextQuestion);
@@ -153,6 +164,10 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
   const commit = (answer: Answer, autoAdvance = true) => {
     if (!q || commitLock.current || completed.current) return;
     commitLock.current = true;
+    if (speakingPhase) {
+      finishWith(responses, details, { status: typeof answer === "string" && answer.trim() ? speakingMode.current : "skipped", transcript: typeof answer === "string" ? answer : "" });
+      return;
+    }
     const correct = isAnswerCorrect(q, answer);
     const skill = (textAssisted && q.skill === 'Listening' ? 'Reading' : q.skill) as TestedSkill;
     const next = [...responses, { id: q.id, correct, skill }];
@@ -236,11 +251,13 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
       case "speaking":
         return (
           <SpeakingView
+            key={q.id}
             q={q}
             transcript={typeof draft === "string" ? draft : ""}
             onChange={(v) => setDraft(v)}
             onSubmit={() => commit(typeof draft === "string" ? draft : "")}
             locked={locked}
+            onInputMode={(mode) => { speakingMode.current = mode; }}
           />
         );
     }
@@ -259,11 +276,11 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
     <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-gradient-hero">
       {/* Top bar */}
       <div className="sticky top-0 z-10 border-b border-border/60 bg-card/90 backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-4">
           <div className="text-sm font-medium text-muted-foreground">
-            Domanda <span className="text-primary font-bold">{index + 1}</span> · massimo {ADAPTIVE_MAX}
+            {speakingPhase ? "Prova finale · Speaking" : <>Domanda <span className="text-primary font-bold">{index + 1}</span> · massimo {ADAPTIVE_MAX + 1}</>}
           </div>
-          <div
+          {!speakingPhase && <div
             role="timer"
             aria-live="polite"
             className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold tabular-nums transition-colors ${
@@ -272,7 +289,7 @@ export const TestRunner = ({ onFinish }: TestRunnerProps) => {
           >
             <Clock className="h-4 w-4" />
             <span>Tempo: {timeStr}</span>
-          </div>
+          </div>}
         </div>
         <div
           className="h-1.5 w-full bg-secondary"

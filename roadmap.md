@@ -1,5 +1,8 @@
 # Tasks
 
+- [ ] Include a speaking task in every completed adaptive test without inferring a CEFR score from transcription.
+- [ ] Verify full test-to-speaking-to-results flow on mobile, microphone denial and small screens.
+
 - [x] Fix binary listening playback and tap-driven mobile-safe controls; all 14 listening recordings decoded successfully and real playback passed.
 - [x] Harden microphone recording and verify real transcription and confirmation at 320px, 390px and desktop; cleanup and permission tests passed; 32 tests passed overall.
 - [x] Clarify speaking availability: adaptive assessment currently excludes it; no scoring or question-bank change made. Physical Safari/Chrome and in-app browser checks need actual devices and remain unverified.
