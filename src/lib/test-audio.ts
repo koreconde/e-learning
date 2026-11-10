@@ -1,3 +1,5 @@
+import { readServiceFailure } from "./service-errors";
+
 const cache = new Map<string, Promise<string>>();
 
 /** Fetch binary audio directly: functions.invoke decodes audio/mpeg as text. */
@@ -13,7 +15,7 @@ export function loadTestAudio(text: string): Promise<string> {
     },
     body: JSON.stringify({ text, voice: "nova" }),
   }).then(async (response) => {
-    if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+    if (!response.ok) throw await readServiceFailure(response, "Audio non disponibile.");
     const blob = await response.blob();
     if (!blob.size || !blob.type.startsWith("audio/")) throw new Error("Invalid audio response");
     const url = URL.createObjectURL(blob);

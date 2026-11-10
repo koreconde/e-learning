@@ -1,12 +1,18 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PhoneVerifyDialog } from "@/components/landing/PhoneVerifyDialog";
+import { phoneVerificationError } from "../../supabase/functions/_shared/phone-verification-error";
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("Phone verification channel recovery", () => {
+  it("classifies Twilio 60600 as an unsupported destination for either channel", () => {
+    expect(phoneVerificationError('[400]: {"code":60600}', "whatsapp").status).toBe(400);
+    expect(phoneVerificationError('[400]: {"code":60600}', "sms").status).toBe(400);
+    expect(phoneVerificationError('[401]: {"code":70051}', "whatsapp").status).toBe(502);
+  });
   it("reads a rejected WhatsApp response and sends SMS only on explicit request", async () => {
     mocks.invoke.mockResolvedValueOnce({ data: null, error: { context: new Response(JSON.stringify({ error: "Numero non raggiungibile su WhatsApp. Prova via SMS o controlla il numero." }), { status: 400 }) } });
     mocks.invoke.mockResolvedValueOnce({ data: { success: true, verificationId: "sms-id" }, error: null });

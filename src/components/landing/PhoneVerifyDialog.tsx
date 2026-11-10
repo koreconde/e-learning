@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { functionFailure } from "@/lib/service-errors";
 
 interface PhoneVerifyDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ export const PhoneVerifyDialog = ({
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [sentChannel, setSentChannel] = useState<"whatsapp" | "sms" | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -37,6 +39,7 @@ export const PhoneVerifyDialog = ({
       setCode("");
       setError(null);
       setCooldown(0);
+      setSentChannel(null);
     }
   }, [open]);
 
@@ -54,10 +57,12 @@ export const PhoneVerifyDialog = ({
         body: { phone, channel },
       });
       if (fnError || !data?.success) {
-        setError((data?.error as string) || "Impossibile inviare il codice. Riprova.");
+        const failure = await functionFailure(fnError, "Impossibile inviare il codice. Riprova.");
+        setError((data?.error as string) || failure.message);
         return;
       }
       setVerificationId(data.verificationId as string);
+      setSentChannel(channel);
       setCooldown(45);
     } catch {
       setError("Errore di rete. Riprova tra qualche istante.");
@@ -80,7 +85,8 @@ export const PhoneVerifyDialog = ({
         body: { verificationId, code: code.trim() },
       });
       if (fnError || !data?.success) {
-        setError((data?.error as string) || "Codice errato. Riprova.");
+        const failure = await functionFailure(fnError, "Codice errato. Riprova.");
+        setError((data?.error as string) || failure.message);
         return;
       }
       onVerified(data.verificationToken as string);
@@ -100,9 +106,9 @@ export const PhoneVerifyDialog = ({
             Verifica il tuo numero
           </DialogTitle>
           <DialogDescription>
-            Ti abbiamo inviato un codice a 6 cifre su WhatsApp al numero{" "}
-            <span className="font-medium text-foreground">{phone}</span>. Inseriscilo qui sotto per
-            accedere al test.
+            {sentChannel ? `Codice a 6 cifre inviato ${sentChannel === "sms" ? "via SMS" : "su WhatsApp"} al numero ` : "Verifica il numero "}
+            <span className="font-medium text-foreground">{phone}</span>.
+            {sentChannel && " Inseriscilo qui sotto per accedere al test."}
           </DialogDescription>
         </DialogHeader>
 
@@ -120,34 +126,34 @@ export const PhoneVerifyDialog = ({
             className="h-14 rounded-xl text-center text-2xl tracking-[0.5em]"
           />
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
           <Button
             type="button"
             onClick={submitCode}
-            disabled={checking || sending || code.length < 4}
+            disabled={!verificationId || checking || sending || code.length < 4}
             className="h-12 w-full rounded-full"
           >
             {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conferma codice"}
           </Button>
 
-          <div className="flex items-center justify-between text-sm">
-            <button
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <Button variant="link"
               type="button"
               onClick={() => sendCode("whatsapp")}
               disabled={sending || cooldown > 0}
               className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
             >
               {cooldown > 0 ? `Rinvia tra ${cooldown}s` : "Rinvia su WhatsApp"}
-            </button>
-            <button
+            </Button>
+            <Button variant="link"
               type="button"
               onClick={() => sendCode("sms")}
               disabled={sending || cooldown > 0}
               className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
             >
               Invia via SMS
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>
