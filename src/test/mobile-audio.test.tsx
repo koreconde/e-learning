@@ -60,6 +60,8 @@ describe("Mobile audio lifecycle", () => {
     render(<SpeakingView q={speaking} transcript="" onChange={() => {}} onSubmit={() => {}} locked={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Registra risposta" }));
     fireEvent.click(await screen.findByRole("button", { name: "Ferma registrazione" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Scrivi la risposta invece" })).toBeEnabled());
     await waitFor(() => expect(screen.getByRole("button", { name: "Registra risposta" })).toBeDisabled());
     expect(mocks.invoke).toHaveBeenCalledTimes(1);
     expect(stopTrack).toHaveBeenCalledTimes(1);
