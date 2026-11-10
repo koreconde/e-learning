@@ -5,6 +5,7 @@ import { ListeningAudio } from "./ListeningAudio";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { functionFailure, ServiceFailure } from "@/lib/service-errors";
 import type {
   MultipleChoiceQ,
   FillBlankQ,
@@ -285,6 +286,7 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked, onInpu
   const [state, setState] = useState<"idle" | "permission" | "recording" | "transcribing">("idle");
   const [error, setError] = useState("");
   const [textFallback, setTextFallback] = useState(false);
+  const [transcriptionBlocked, setTranscriptionBlocked] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -322,7 +324,7 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked, onInpu
   };
 
   const start = async () => {
-    if (busyRef.current || locked) return;
+    if (busyRef.current || locked || transcriptionBlocked) return;
     busyRef.current = true;
     setError("");
     setState("permission");
@@ -355,14 +357,18 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked, onInpu
             reader.readAsDataURL(blob);
           });
           const { data, error: requestError } = await supabase.functions.invoke("transcribe-audio", { body: { audio, mimeType: blob.type } });
-          if (requestError) throw requestError;
+          if (requestError) throw await functionFailure(requestError, "Trascrizione non disponibile. Riprova o scrivi la risposta.");
           if (!activeRef.current) return;
           const text = (data as { text?: string })?.text?.trim();
           if (text) onChangeRef.current(text);
           else setError("Non ho riconosciuto parole. Riprova.");
         } catch (cause) {
           console.error("Transcription error", cause);
-          if (activeRef.current) setError("Trascrizione non disponibile. Riprova o scrivi la risposta.");
+          if (activeRef.current) {
+            const terminal = cause instanceof ServiceFailure && !cause.retryable;
+            if (terminal) setTranscriptionBlocked(true);
+            setError(terminal ? `${cause.message} Puoi scrivere la risposta invece.` : "Trascrizione non disponibile. Riprova o scrivi la risposta.");
+          }
         } finally {
           busyRef.current = false;
           if (activeRef.current) setState("idle");
@@ -390,7 +396,7 @@ export const SpeakingView = ({ q, transcript, onChange, onSubmit, locked, onInpu
       <ListeningAudio text={q.targetPhrase} label="Ascolta esempio" />
       <div className="mt-6">
         {!textFallback && canRecord && <>
-          <Button size="icon" variant={state === "recording" ? "destructive" : "default"} className="h-16 w-16 rounded-full" disabled={locked || state === "permission" || state === "transcribing"} onClick={() => state === "recording" ? stop() : void start()} aria-label={state === "recording" ? "Ferma registrazione" : "Registra risposta"}>
+          <Button size="icon" variant={state === "recording" ? "destructive" : "default"} className="h-16 w-16 rounded-full" disabled={locked || transcriptionBlocked || state === "permission" || state === "transcribing"} onClick={() => state === "recording" ? stop() : void start()} aria-label={state === "recording" ? "Ferma registrazione" : "Registra risposta"}>
             {state === "permission" || state === "transcribing" ? <Loader2 className="animate-spin" /> : state === "recording" ? <Square /> : <Mic />}
           </Button>
           <p role="status" className="mt-3 text-sm text-muted-foreground">{state === "permission" ? "In attesa del permesso microfono…" : state === "recording" ? "Registrazione in corso…" : state === "transcribing" ? "Sto trascrivendo…" : "Microfono pronto"}</p>

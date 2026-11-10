@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, cleanup } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ListeningView, SpeakingView } from "@/components/test/QuestionTypes";
 import type { ListeningQ, SpeakingQ } from "@/data/questions";
+import { ServiceFailure } from "@/lib/service-errors";
 
 const mocks = vi.hoisted(() => ({ load: vi.fn(), invoke: vi.fn() }));
 vi.mock("@/lib/test-audio", () => ({ loadTestAudio: mocks.load }));
@@ -40,6 +41,31 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 describe("Mobile audio lifecycle", () => {
+  it("blocks audio retries after a permanent credit failure while retaining text access", async () => {
+    mocks.load.mockRejectedValue(new ServiceFailure("Not enough credits. Top up credits.", 402, false));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const reveal = vi.fn();
+    render(<ListeningView q={listening} selected={null} onSelect={() => {}} locked={false} onTextReveal={reveal} />);
+    await screen.findByText("Not enough credits. Top up credits.");
+    expect(screen.getByRole("button", { name: "Riproduci audio" })).toBeDisabled();
+    expect(mocks.load).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /Mostra il testo/ }));
+    expect(reveal).toHaveBeenCalledTimes(1);
+  });
+  it("stops voice retries after 402 and keeps the written answer available", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const stopTrack = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: vi.fn(async () => ({ getTracks: () => [{ stop: stopTrack }] })) } });
+    mocks.invoke.mockResolvedValue({ data: null, error: { context: new Response(JSON.stringify({ details: JSON.stringify({ message: "Not enough credits. Top up credits." }) }), { status: 402 }) } });
+    render(<SpeakingView q={speaking} transcript="" onChange={() => {}} onSubmit={() => {}} locked={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Registra risposta" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ferma registrazione" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Registra risposta" })).toBeDisabled());
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Scrivi la risposta invece" }));
+    expect(screen.getByRole("textbox", { name: "Risposta scritta" })).toBeEnabled();
+  });
   it("prepares without autoplay and plays synchronously on the user's tap", async () => {
     render(<ListeningView q={listening} selected={null} onSelect={() => {}} locked={false} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Riproduci audio" })).toBeEnabled());

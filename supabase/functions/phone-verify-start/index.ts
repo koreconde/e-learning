@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 import { startVerification } from "../_shared/twilio-verify.ts";
+import { phoneVerificationError } from "../_shared/phone-verification-error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,11 +69,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Twilio verification start failed", msg);
-    // Codice 60200/60205: numero non valido o non supportato dal canale
-    if (msg.includes("60200") || msg.includes("60205") || msg.includes("21211")) {
-      return json({ error: "Questo numero non risulta valido o non ha WhatsApp." }, 400);
-    }
-    return json({ error: "Impossibile inviare il codice. Riprova tra poco." }, 502);
+    const failure = phoneVerificationError(msg, parsed.data.channel);
+    return json({ error: failure.error }, failure.status);
   }
 
   const { data: row, error } = await supabase
