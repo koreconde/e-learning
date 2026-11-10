@@ -1,5 +1,8 @@
 # Tasks
 
+- [ ] Verify and handle WhatsApp 60600 without hiding the error; preserve explicit SMS alternative and phone verification.
+- [ ] Verify restored audio/voice credits and prevent misleading retries on permanent AI failures; retain text fallback.
+
 - [x] Review publication readiness: 39 tests pass, latest build OK and basic security scan reports no findings. Real-device and full lead/CRM verification remain unverified; publishing was not requested directly and was not performed.
 - [x] Activate daily monitoring at 07:23 UTC for website reachability, database reads, Twilio service access, recent email failures and real example audio/transcription. First run passed all five checks. Failure-only alerts configured for raff@escapecampus.it; actual alert delivery has not been exercised because no failure occurred. No synthetic leads or WhatsApp codes sent.
 
