@@ -1,7 +1,7 @@
 # Tasks
 
 - [x] Sweep Twilio funding/auth failures across WhatsApp, SMS, code checking and daily monitoring; 13 regression checks and intercepted 390px browser check pass. Updated functions deployed; frontend awaits publication. Lead gate and settled records unchanged.
-- [ ] Verify live Twilio balance and delivery after account authorization/billing is restored; blocked by current authorization refusal. No real codes sent.
+- [x] Restore Twilio authorization and verify live balance and Verify service: both return 200 after reconnect; balance positive and affected functions redeployed. Actual code delivery remains unverified; no real codes sent.
 
 - [x] Handle WhatsApp 60600 as an unsupported destination and expose the safe error with explicit SMS alternative. Reconnected Twilio and verified service read (200); deployed verification functions. Regression checks and 320/390px UI passed; actual SMS/WhatsApp delivery to affected numbers remains unverified (no codes sent).
 - [x] Verify restored audio/voice credits with real decoded audio and accurate hosted transcription; disable retries for permanent failures while retaining text access. No models or credit limits changed; frontend requires publication.
