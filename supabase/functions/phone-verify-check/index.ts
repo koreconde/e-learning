@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { checkVerification } from "../_shared/twilio-verify.ts";
+import { phoneServiceOutage } from "../_shared/phone-verification-error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,19 +53,20 @@ Deno.serve(async (req) => {
   if (row.verified) return json({ success: true, verificationToken: row.token });
   if (row.attempts >= 6) return json({ error: "Troppi tentativi. Richiedi un nuovo codice." }, 429);
 
-  await supabase
-    .from("phone_verifications")
-    .update({ attempts: row.attempts + 1 })
-    .eq("id", row.id);
-
   let approved = false;
   try {
     const res = await checkVerification(row.phone, parsed.data.code);
     approved = res.status === "approved";
   } catch (e) {
-    console.error("Twilio verification check failed", e instanceof Error ? e.message : e);
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("Twilio verification check failed", message);
+    const outage = phoneServiceOutage(message);
+    if (outage) return json(outage, outage.status);
+    await supabase.from("phone_verifications").update({ attempts: row.attempts + 1 }).eq("id", row.id);
     return json({ error: "Codice non valido o scaduto." }, 400);
   }
+
+  await supabase.from("phone_verifications").update({ attempts: row.attempts + 1 }).eq("id", row.id);
 
   if (!approved) return json({ error: "Codice errato. Riprova." }, 400);
 

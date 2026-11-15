@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Twilio verification start failed", msg);
     const failure = phoneVerificationError(msg, parsed.data.channel);
-    return json({ error: failure.error }, failure.status);
+    return json(failure, failure.status);
   }
 
   const { data: row, error } = await supabase

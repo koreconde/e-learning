@@ -32,6 +32,7 @@ export const PhoneVerifyDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [sentChannel, setSentChannel] = useState<"whatsapp" | "sms" | null>(null);
+  const [serviceBlocked, setServiceBlocked] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -40,6 +41,7 @@ export const PhoneVerifyDialog = ({
       setError(null);
       setCooldown(0);
       setSentChannel(null);
+      setServiceBlocked(false);
     }
   }, [open]);
 
@@ -50,6 +52,7 @@ export const PhoneVerifyDialog = ({
   }, [cooldown]);
 
   const sendCode = async (channel: "whatsapp" | "sms" = "whatsapp") => {
+    if (serviceBlocked) return;
     setSending(true);
     setError(null);
     try {
@@ -59,6 +62,7 @@ export const PhoneVerifyDialog = ({
       if (fnError || !data?.success) {
         const failure = await functionFailure(fnError, "Impossibile inviare il codice. Riprova.");
         setError((data?.error as string) || failure.message);
+        setServiceBlocked(data?.props?.retryable === false || (failure.status === 503 && !failure.retryable));
         return;
       }
       setVerificationId(data.verificationId as string);
@@ -77,7 +81,7 @@ export const PhoneVerifyDialog = ({
   }, [open]);
 
   const submitCode = async () => {
-    if (!verificationId || code.trim().length < 4) return;
+    if (serviceBlocked || !verificationId || code.trim().length < 4) return;
     setChecking(true);
     setError(null);
     try {
@@ -87,6 +91,7 @@ export const PhoneVerifyDialog = ({
       if (fnError || !data?.success) {
         const failure = await functionFailure(fnError, "Codice errato. Riprova.");
         setError((data?.error as string) || failure.message);
+        setServiceBlocked(data?.props?.retryable === false || (failure.status === 503 && !failure.retryable));
         return;
       }
       onVerified(data.verificationToken as string);
@@ -131,7 +136,7 @@ export const PhoneVerifyDialog = ({
           <Button
             type="button"
             onClick={submitCode}
-            disabled={!verificationId || checking || sending || code.length < 4}
+            disabled={serviceBlocked || !verificationId || checking || sending || code.length < 4}
             className="h-12 w-full rounded-full"
           >
             {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conferma codice"}
@@ -141,7 +146,7 @@ export const PhoneVerifyDialog = ({
             <Button variant="link"
               type="button"
               onClick={() => sendCode("whatsapp")}
-              disabled={sending || cooldown > 0}
+              disabled={serviceBlocked || sending || cooldown > 0}
               className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
             >
               {cooldown > 0 ? `Rinvia tra ${cooldown}s` : "Rinvia su WhatsApp"}
@@ -149,7 +154,7 @@ export const PhoneVerifyDialog = ({
             <Button variant="link"
               type="button"
               onClick={() => sendCode("sms")}
-              disabled={sending || cooldown > 0}
+              disabled={serviceBlocked || sending || cooldown > 0}
               className="text-muted-foreground underline underline-offset-4 disabled:opacity-50"
             >
               Invia via SMS
