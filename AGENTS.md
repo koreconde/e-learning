@@ -12,3 +12,4 @@
 - Use complete MediaRecorder files for speaking transcription and release microphone tracks on every exit so voice input does not depend on Web Speech availability.
 - Parse structured function error responses through the shared browser service-error helper so safe upstream reasons and terminal retry restrictions survive non-2xx responses.
 - Map unsupported phone destinations in a runtime-neutral helper and keep SMS sends user-initiated so channel recovery cannot generate duplicate or unsolicited verification traffic.
+- Classify phone-provider funding/auth outages in one shared helper for send/check flows; block channel retries until the dialog is reopened and monitor balance read-only so service accessibility is not mistaken for funded delivery.

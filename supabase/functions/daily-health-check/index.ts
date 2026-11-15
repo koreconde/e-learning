@@ -1,7 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { sendAuditedEmail } from '../_shared/send-audited-email.ts';
-import { getVerifyServiceSid } from '../_shared/twilio-verify.ts';
+import { getVerifyServiceSid, checkTwilioBalance } from '../_shared/twilio-verify.ts';
+import { phoneServiceOutage } from '../_shared/phone-verification-error.ts';
 import { transcriptMatches, shouldPauseAI, type Check } from './checks.ts';
 
 Deno.serve(async req => {
@@ -28,7 +29,13 @@ Deno.serve(async req => {
   const run = async (name: string, task: () => Promise<string>) => {
     if (checks.some(c => c.name === name)) return;
     try { checks.push({ name, ok: true, detail: await task() }); }
-    catch { checks.push({ name, ok: false, detail: 'Controllo non riuscito; verificare il servizio.' }); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      const detail = name === 'Credito Twilio'
+        ? phoneServiceOutage(message)?.error ?? (message === 'Credito Twilio esaurito: ricaricare l’account Twilio.' ? message : 'Saldo Twilio non verificabile: controllare credito e autorizzazione su Twilio.')
+        : 'Controllo non riuscito; verificare il servizio.';
+      checks.push({ name, ok: false, detail });
+    }
     await persist();
   };
   try {
@@ -48,6 +55,10 @@ Deno.serve(async req => {
       if (!response.ok) throw new Error('Twilio unavailable');
       await response.body?.cancel();
       return 'Servizio di verifica accessibile; nessun codice inviato.';
+    });
+    await run('Credito Twilio', async () => {
+      await checkTwilioBalance();
+      return 'Saldo positivo al momento del controllo; non garantisce gli invii successivi.';
     });
     await run('Errori email recenti', async () => {
       const since = new Date(Date.now() - 86400000).toISOString();

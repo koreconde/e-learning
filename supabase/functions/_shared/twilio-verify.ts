@@ -1,4 +1,5 @@
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+import { requirePositiveTwilioBalance } from "./phone-verification-error.ts";
 const SERVICE_NAME = "English Infinity";
 // Known Verify service SID — avoids an extra Twilio round-trip on every request.
 const DEFAULT_SERVICE_SID = "VA422639a8c5eb1f4341d1da210d64f693";
@@ -60,6 +61,11 @@ export async function startVerification(phoneE164: string, channel: "whatsapp" |
     method: "POST",
     form: { To: phoneE164, Channel: channel, Locale: "it" },
   });
+}
+
+export async function checkTwilioBalance() {
+  const balance = await twilioFetch("/Balance.json");
+  requirePositiveTwilioBalance(balance.balance);
 }
 
 export async function checkVerification(phoneE164: string, code: string) {
