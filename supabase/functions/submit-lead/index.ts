@@ -117,11 +117,11 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-async function verifyTurnstile(token: string, ip: string | null): Promise<boolean> {
+async function verifyTurnstile(token: string, ip: string | null): Promise<{ ok: boolean; codes: string[] }> {
   const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
   if (!secret) {
     console.error("Missing TURNSTILE_SECRET_KEY");
-    return false;
+    return { ok: false, codes: ["missing-secret"] };
   }
   const form = new FormData();
   form.append("secret", secret);
@@ -136,7 +136,7 @@ async function verifyTurnstile(token: string, ip: string | null): Promise<boolea
     if (!data.success) {
       console.warn("Turnstile failed", data["error-codes"]);
     }
-    return !!data.success;
+    return { ok: !!data.success, codes: Array.isArray(data["error-codes"]) ? data["error-codes"] : [] };
   } catch (e) {
     console.error("Turnstile network error", e);
     return false;
@@ -195,10 +195,6 @@ Deno.serve(async (req) => {
     req.headers.get("cf-connecting-ip") ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     null;
-  const ok = await verifyTurnstile(data.turnstileToken, ip);
-  if (!ok) {
-    return jsonResponse({ error: "Verifica anti-bot fallita. Ricarica e riprova." }, 403);
-  }
 
   // Insert lead with service role (bypasses RLS)
   const supabase = createClient(
@@ -223,6 +219,19 @@ Deno.serve(async (req) => {
       { error: "Numero non verificato. Ripeti la verifica WhatsApp." },
       403,
     );
+  }
+
+  // Anti-bot check runs after the phone OTP check. A token that only expired or
+  // was already consumed (OTP step took long, or a retry) is accepted because the
+  // visitor already proved a real phone via OTP; any other failure still blocks.
+  const turnstile = await verifyTurnstile(data.turnstileToken, ip);
+  if (!turnstile.ok) {
+    const onlyStale = turnstile.codes.length > 0 &&
+      turnstile.codes.every((c) => c === "timeout-or-duplicate");
+    if (!onlyStale) {
+      return jsonResponse({ error: "Verifica anti-bot fallita. Ricarica e riprova." }, 403);
+    }
+    console.info("Turnstile stale token accepted after verified phone");
   }
 
 
