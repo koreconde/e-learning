@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 import { sendAuditedEmail } from "../_shared/send-audited-email.ts";
+import { ADMIN_NOTIFICATION_RECIPIENTS } from "../_shared/admin-recipients.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
   // @ts-ignore EdgeRuntime is supplied by the hosted runtime
   if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(leadEmailPromise);
 
-  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
+  const admins = [...ADMIN_NOTIFICATION_RECIPIENTS];
   await Promise.all(
     admins.map((addr) =>
       sendAuditedEmail(supabase, "test-result-admin", addr, {

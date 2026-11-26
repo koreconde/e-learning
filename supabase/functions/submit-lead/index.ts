@@ -5,6 +5,7 @@ import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 import { sendLeadToEscapeVision } from "../_shared/escapevision.ts";
 import { sendAuditedEmail } from "../_shared/send-audited-email.ts";
 import { requiresPhoneVerification } from "../_shared/phone-verification-policy.ts";
+import { ADMIN_NOTIFICATION_RECIPIENTS } from "../_shared/admin-recipients.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -339,7 +340,7 @@ Deno.serve(async (req) => {
     note: `Fonte: ${fonte} | Qualità: ${scoring.quality} (${scoring.score}/100) | Obiettivo: ${data.goal} | Tempistica: ${data.timeline} | Età: ${data.eta} | Occupazione: ${data.occupazione}`,
   }).catch((e) => console.error("crm sync failed", e));
 
-  const admins = ["info@englishinfinity.io", "giada@escapecampus.it", "raff@escapecampus.it", "francesca@escapecampus.it"];
+  const admins = [...ADMIN_NOTIFICATION_RECIPIENTS];
   const emailPromise = Promise.all(
     admins.map((addr) =>
       sendAuditedEmail(supabase, "new-lead-admin", addr, {
