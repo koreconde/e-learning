@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Share the phone-verification enablement policy between the form and lead handler so the client and server cannot disagree about requiring OTP.
+
 - Run daily monitoring through a token-protected scheduled function with a database lease, per-day persisted checks, deterministic alert keys and persisted AI pause state; never create synthetic leads or send verification codes.
 
 - Dispatch EscapeVision from submit-lead only after a successful database save, alongside existing background tasks, so navigation and test completion cannot duplicate or block delivery.

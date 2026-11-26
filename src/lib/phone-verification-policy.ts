@@ -1,0 +1,1 @@
+export { PHONE_VERIFICATION_ENABLED, requiresPhoneVerification } from "../../supabase/functions/_shared/phone-verification-policy";

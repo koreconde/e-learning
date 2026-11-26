@@ -4,6 +4,7 @@ import { parsePhoneNumberFromString } from "npm:libphonenumber-js@1.13.2";
 import { syncLeadToCrm, deriveSource } from "../_shared/crm-sync.ts";
 import { sendLeadToEscapeVision } from "../_shared/escapevision.ts";
 import { sendAuditedEmail } from "../_shared/send-audited-email.ts";
+import { requiresPhoneVerification } from "../_shared/phone-verification-policy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -202,11 +203,8 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Temporarily off while the phone provider account is suspended: leads are
-  // saved as unverified and the anti-bot check becomes strict.
-  const PHONE_VERIFICATION_ENABLED = false;
   let phoneVerified = false;
-  if (PHONE_VERIFICATION_ENABLED || data.phoneVerificationToken) {
+  if (requiresPhoneVerification(data.phoneVerificationToken)) {
   // Phone must be verified via WhatsApp OTP
     const { data: verification } = await supabase
       .from("phone_verifications")

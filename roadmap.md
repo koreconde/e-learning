@@ -1,5 +1,7 @@
 # Tasks
 
+- [x] Restore the shared phone-verification gate: Twilio balance and Verify service return 200 after reconnect, four affected functions deployed, 11 regression tests pass and the intercepted 390px form waits for OTP before sending. Publication requested; live frontend rollout and actual phone delivery remain unverified (no real codes or synthetic leads sent).
+
 - [x] Sweep Twilio funding/auth failures across WhatsApp, SMS, code checking and daily monitoring; 13 regression checks and intercepted 390px browser check pass. Updated functions deployed; frontend awaits publication. Lead gate and settled records unchanged.
 - [x] Restore Twilio authorization and verify live balance and Verify service: both return 200 after reconnect; balance positive and affected functions redeployed. Actual code delivery remains unverified; no real codes sent.
 

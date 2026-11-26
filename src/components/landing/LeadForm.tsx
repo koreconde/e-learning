@@ -17,8 +17,7 @@ import {
 import { TurnstileWidget } from "./TurnstileWidget";
 import { PhoneVerifyDialog } from "./PhoneVerifyDialog";
 
-// Temporarily off while the phone provider account is suspended.
-const PHONE_VERIFICATION_ENABLED = false;
+import { PHONE_VERIFICATION_ENABLED } from "@/lib/phone-verification-policy";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 

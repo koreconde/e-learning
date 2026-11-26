@@ -2,12 +2,17 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PhoneVerifyDialog } from "@/components/landing/PhoneVerifyDialog";
 import { phoneVerificationError, phoneServiceOutage, requirePositiveTwilioBalance } from "../../supabase/functions/_shared/phone-verification-error";
+import { PHONE_VERIFICATION_ENABLED, requiresPhoneVerification } from "@/lib/phone-verification-policy";
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("Phone verification channel recovery", () => {
+  it("requires phone verification again even when a visitor omits the token", () => {
+    expect(PHONE_VERIFICATION_ENABLED).toBe(true);
+    expect(requiresPhoneVerification("")).toBe(true);
+  });
   it("classifies Twilio 60600 as an unsupported destination for either channel", () => {
     expect(phoneVerificationError('[400]: {"code":60600}', "whatsapp").status).toBe(400);
     expect(phoneVerificationError('[400]: {"code":60600}', "sms").status).toBe(400);
