@@ -5,7 +5,7 @@ const steps = [
   {
     icon: ClipboardList,
     title: "Metti alla prova il tuo inglese",
-    desc: "Grammar, Vocabulary, Reading e Listening. Fino a 24 domande, massimo 12 minuti.",
+    desc: "Grammar, Vocabulary, Reading e Listening. Fino a 16 domande, massimo 12 minuti.",
   },
   {
     icon: GraduationCap,

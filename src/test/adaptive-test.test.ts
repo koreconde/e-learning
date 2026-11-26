@@ -14,9 +14,9 @@ function simulate(correct: boolean) {
 describe('adaptive placement', () => {
   it('raises difficulty after demonstrated correct answers', () => {
     const q = nextAdaptiveQuestion([]);
-    expect(q?.level).toBe('B1');
+    expect(q?.level).toBe('A1');
     const responses = simulate(true);
-    expect(adaptiveBank.find(q => q.id === responses[8].id)?.level).toBe('C1');
+    expect(adaptiveBank.find(q => q.id === responses[responses.length - 1].id)?.level).toBe('C1');
     expect(adaptiveResult(responses).level).toBe('C1');
   });
   it('reduces difficulty after incorrect answers', () => {
@@ -24,11 +24,11 @@ describe('adaptive placement', () => {
     expect(adaptiveBank.find(q => q.id === responses[4].id)?.level).toBe('A1');
     expect(adaptiveResult(responses).level).toBe('A1');
   });
-  it('uses at least 16 and no more than 24 distinct items', () => {
+  it('uses at least 12 and no more than 16 distinct items', () => {
     for (const correct of [true, false]) {
       const responses = simulate(correct);
-      expect(responses.length).toBeGreaterThanOrEqual(16);
-      expect(responses.length).toBeLessThanOrEqual(24);
+      expect(responses.length).toBeGreaterThanOrEqual(12);
+      expect(responses.length).toBeLessThanOrEqual(16);
       expect(new Set(responses.map(r => r.id)).size).toBe(responses.length);
     }
     expect(nextAdaptiveQuestion(Array.from({length: ADAPTIVE_MAX}, () => ({id: 1, correct: false, skill: 'Grammar'})))).toBeUndefined();
@@ -52,8 +52,8 @@ describe('adaptive placement', () => {
   it('does not claim adequate evidence when audio is replaced by reading', () => {
     const responses = simulate(true).map(r => ({...r, skill: r.skill === 'Listening' ? 'Reading' as const : r.skill}));
     expect(adaptiveResult(responses).confidence).toBe('limited');
-    expect(shouldFinishAdaptive(responses.slice(0,16))).toBe(false);
-    expect(nextAdaptiveQuestion(responses.slice(0,16))).toBeDefined();
+    expect(shouldFinishAdaptive(responses.slice(0,12))).toBe(false);
+    expect(nextAdaptiveQuestion(responses.slice(0,12))).toBeDefined();
   });
   it('has unique identifiers and complete skill coverage at every band', () => {
     expect(new Set(adaptiveBank.map(q => q.id)).size).toBe(adaptiveBank.length);

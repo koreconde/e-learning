@@ -1,8 +1,9 @@
 import { adaptiveBank } from '@/data/adaptive-bank';
 import type { CEFRLevel, Question, Result } from '@/data/questions';
 
-export const ADAPTIVE_MIN = 16;
-export const ADAPTIVE_MAX = 24;
+export const ADAPTIVE_MIN = 12;
+export const ADAPTIVE_MAX = 16;
+export const ADAPTIVE_RAMP = 0.5;
 export const TEST_SKILLS = ['Grammar', 'Vocabulary', 'Reading', 'Listening'] as const;
 export type TestedSkill = typeof TEST_SKILLS[number];
 export interface AdaptiveResponse { id: number; correct: boolean; skill: TestedSkill }
@@ -37,8 +38,10 @@ export function nextAdaptiveQuestion(responses: AdaptiveResponse[], bank: Questi
   const availableSkills = TEST_SKILLS.filter(skill => bank.some(q => q.skill === skill && !responses.some(r => r.id === q.id)));
   const skill = availableSkills.sort((a, b) => counts[a] - counts[b])[0];
   const { mean } = estimateAbility(responses);
+  // Warm-up: start at A1 and let difficulty climb by at most half a band per answer.
+  const target = Math.min(mean, responses.length * ADAPTIVE_RAMP);
   const available = bank.filter(q => q.skill === skill && !responses.some(r => r.id === q.id));
-  return available.sort((a, b) => Math.abs(levels.indexOf(a.level) - mean) - Math.abs(levels.indexOf(b.level) - mean))[0];
+  return available.sort((a, b) => Math.abs(levels.indexOf(a.level) - target) - Math.abs(levels.indexOf(b.level) - target))[0];
 }
 
 export function shouldFinishAdaptive(responses: AdaptiveResponse[]) {

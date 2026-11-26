@@ -30,7 +30,7 @@ it("offers speaking after receptive questions and finishes only after its submis
   const [result, details] = finish.mock.calls[0];
   expect(result.speaking).toEqual({ status: "written", transcript: "My name is Alex" });
   expect(result.score).toBe(0);
-  expect(result.total).toBeLessThanOrEqual(24);
+  expect(result.total).toBeLessThanOrEqual(16);
   expect(details.every((item: { skill: string }) => item.skill !== "Speaking")).toBe(true);
 });
 
