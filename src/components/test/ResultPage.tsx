@@ -85,6 +85,12 @@ export const ResultPage = ({ result, name, email }: ResultPageProps) => {
           <p className="mx-auto mt-4 max-w-xl text-background/70">
             Consulenza gratuita uno-a-uno: confermi il tuo livello reale e ricevi un percorso su misura. Scegli tu come preferisci.
           </p>
+          <ul className="mx-auto mt-6 grid max-w-xl gap-2 text-left text-sm text-background/85 sm:grid-cols-2">
+            <li className="flex gap-2"><span className="text-accent">●</span>Dura circa 30 minuti</li>
+            <li className="flex gap-2"><span className="text-accent">●</span>Videochiamata su Google Meet</li>
+            <li className="flex gap-2"><span className="text-accent">●</span>Tieni la telecamera accesa</li>
+            <li className="flex gap-2"><span className="text-accent">●</span>Mettiti in un ambiente silenzioso</li>
+          </ul>
           <div className="mt-8 flex flex-col items-center gap-4">
             <button
               onClick={() => {

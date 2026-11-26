@@ -1,10 +1,11 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Hr, Html, Preview, Section, Text,
+  Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = 'Escape Campus'
+const BOOKING_URL = 'https://calendly.com/francescafilipp'
 
 interface ErrorItem {
   questionNumber: number
@@ -75,10 +76,21 @@ const TestResultLeadEmail = ({
         )}
 
         <Hr style={hr} />
-        <Text style={footer}>
-          Vuoi un piano di studio personalizzato? Prenota uno Speaking Test gratuito di 30 minuti
-          con un Cambridge Teacher su <a href="https://calendly.com/francescafilipp" style={link}>calendly.com/francescafilipp</a>.
-        </Text>
+        <Section style={ctaBox}>
+          <Text style={ctaTitle}>Attenzione: questo livello non è ancora convalidato</Text>
+          <Text style={ctaText}>
+            È una stima automatica. Per conoscere il tuo livello reale deve essere convalidato da un docente
+            certificato Cambridge, che valuta anche come parli.
+          </Text>
+          <Text style={ctaText}>
+            <strong>Come funziona la consulenza gratuita:</strong><br />
+            • Dura circa 30 minuti<br />
+            • Si svolge in videochiamata su Google Meet<br />
+            • Serve la telecamera accesa<br />
+            • Mettiti in un ambiente silenzioso
+          </Text>
+          <Button href={BOOKING_URL} style={button}>Prenota la tua consulenza</Button>
+        </Section>
         <Text style={footer}>— Il team {SITE_NAME}</Text>
       </Container>
     </Body>
@@ -137,3 +149,7 @@ const errorRight = { color: '#1b8a3a', fontWeight: 600 }
 const hr = { borderColor: '#eaeaea', margin: '24px 0' }
 const footer = { fontSize: '13px', color: '#777', lineHeight: '1.6', margin: '0 0 8px' }
 const link = { color: '#1276B5', textDecoration: 'underline' }
+const ctaBox = { backgroundColor: '#141414', borderRadius: '16px', padding: '24px', margin: '0 0 24px', textAlign: 'center' as const }
+const ctaTitle = { fontSize: '18px', fontWeight: 'bold', color: '#FACC3D', margin: '0 0 10px' }
+const ctaText = { fontSize: '14px', color: '#ffffff', lineHeight: '1.6', margin: '0 0 14px', textAlign: 'left' as const }
+const button = { backgroundColor: '#FACC3D', color: '#141414', fontSize: '16px', fontWeight: 'bold', borderRadius: '999px', padding: '14px 28px', textDecoration: 'none', display: 'inline-block' }

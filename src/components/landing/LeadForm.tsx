@@ -186,7 +186,7 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
           </h2>
           <p className="mt-5 max-w-md text-background/70">
             Compila il modulo per accedere al test. Al termine riceverai il risultato CEFR via email
-            e un nostro docente ti ricontatterà per una consulenza gratuita di 15 minuti, costruita sul tuo obiettivo.
+            e un nostro docente ti ricontatterà per una consulenza gratuita di circa 30 minuti su Google Meet, costruita sul tuo obiettivo.
           </p>
           <div className="mt-8 flex items-center gap-2 text-sm text-background/60">
             <Lock className="h-4 w-4" />

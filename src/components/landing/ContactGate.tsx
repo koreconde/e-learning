@@ -27,7 +27,7 @@ const OPTIONS: {
     value: "dopo",
     icon: Clock,
     title: "Sì, dopo aver visto il risultato",
-    desc: "Prima vedi il tuo livello, poi ricevi una consulenza gratuita di 15 minuti.",
+    desc: "Prima vedi il tuo livello, poi ricevi una consulenza gratuita di circa 30 minuti su Google Meet.",
     accent: "border-foreground/15 bg-card hover:bg-foreground/[0.03]",
   },
   {
