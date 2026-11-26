@@ -76,7 +76,7 @@ export default function AdminCampaigns() {
   const [cSubject, setCSubject] = useState("");
   const [cPreview, setCPreview] = useState("");
   const [cFromName, setCFromName] = useState("Escape Campus");
-  const [cReplyTo, setCReplyTo] = useState("info@englishinfinity.io");
+  const [cReplyTo, setCReplyTo] = useState("raff@escapecampus.it");
   const [cTitle, setCTitle] = useState("");
   const [cHtml, setCHtml] = useState(
     `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">\n  <h1>Ciao *|FNAME|*</h1>\n  <p>Il tuo messaggio qui...</p>\n  <p style="margin-top:32px;font-size:12px;color:#888">*|UNSUB|*</p>\n</div>`,
