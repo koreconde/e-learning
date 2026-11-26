@@ -122,8 +122,6 @@ const SELLERS = [
 const MANAGERS = [
   "francesca@escapecampus.it",
   "raff@escapecampus.it",
-  "giada@escapecampus.it",
-  "info@englishinfinity.io",
 ] as const;
 
 type Lead = {
