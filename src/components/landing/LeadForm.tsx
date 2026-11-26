@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/select";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { PhoneVerifyDialog } from "./PhoneVerifyDialog";
+
+// Temporarily off while the phone provider account is suspended.
+const PHONE_VERIFICATION_ENABLED = false;
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 
@@ -141,6 +144,16 @@ export const LeadForm = ({ onSubmit }: LeadFormProps) => {
       elapsedMs,
       honeypot: data.website ?? "",
     });
+    if (!PHONE_VERIFICATION_ENABLED) {
+      await onSubmit(
+        {
+          name: data.name, email: data.email, phone: data.phone, goal: data.goal,
+          timeline: data.timeline, eta: data.eta, occupazione: data.occupazione,
+        },
+        { turnstileToken, elapsedMs, honeypot: data.website ?? "", phoneVerificationToken: "" },
+      );
+      return;
+    }
     setVerifyOpen(true);
   });
 
